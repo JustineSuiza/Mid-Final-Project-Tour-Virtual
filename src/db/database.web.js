@@ -159,13 +159,17 @@ export async function deleteDestination(id) {
 export async function getHomeData() {
   const counts = {};
   state.destinations.forEach((d) => (counts[d.category] = (counts[d.category] || 0) + 1));
+  const categoryImages = {};
+  state.destinations.forEach((d) => {
+    if (d.imageUri && !categoryImages[d.category]) categoryImages[d.category] = d.imageUri;
+  });
   const completed = state.destinations.filter((d) => state.progress[d.id]?.completed === 1).length;
   const upNext = state.destinations
     .filter((d) => state.progress[d.id]?.completed !== 1)
     .sort((a, b) => a.id - b.id)
     .slice(0, 4)
     .map(listRow);
-  return { total: state.destinations.length, completed, counts, upNext };
+  return { total: state.destinations.length, completed, counts, categoryImages, upNext };
 }
 
 /* ------------------------------ quiz ------------------------------ */

@@ -188,10 +188,18 @@ export async function getHomeData() {
   const rows = await db.getAllAsync('SELECT category, COUNT(*) AS n FROM destinations GROUP BY category');
   const counts = {};
   rows.forEach((r) => (counts[r.category] = r.n));
+  const imageRows = await db.getAllAsync(
+    `SELECT category, imageUri FROM destinations
+     WHERE imageUri IS NOT NULL AND imageUri != '' ORDER BY id`
+  );
+  const categoryImages = {};
+  imageRows.forEach((r) => {
+    if (!categoryImages[r.category]) categoryImages[r.category] = r.imageUri;
+  });
   const upNext = await db.getAllAsync(
     `SELECT ${LIST_SELECT} ${LIST_FROM} WHERE COALESCE(p.completed, 0) = 0 ORDER BY d.id LIMIT 4`
   );
-  return { total, completed, counts, upNext };
+  return { total, completed, counts, categoryImages, upNext };
 }
 
 /* ------------------------------ quiz ------------------------------- */

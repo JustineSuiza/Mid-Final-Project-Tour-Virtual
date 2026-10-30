@@ -9,16 +9,14 @@ import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
 
 export default function HomeScreen({ navigation }) {
-  const { surface, text, mutedText, border, background } = useAppTheme();
-  const [home, setHome] = useState({ total: 0, completed: 0, counts: {}, upNext: [] });
+  const { surface, text, mutedText, background } = useAppTheme();
+  const [home, setHome] = useState({ categoryImages: {}, upNext: [] });
 
   useFocusEffect(
     useCallback(() => {
       getHomeData().then(setHome);
     }, [])
   );
-
-  const pct = home.total ? home.completed / home.total : 0;
 
   return (
     <ScrollView
@@ -51,42 +49,45 @@ export default function HomeScreen({ navigation }) {
           </View>
         </ImageBackground>
 
-          <Pressable style={styles.progress} onPress={() => navigation.navigate('Progress')} accessibilityRole="button">
-            <View style={{ flex: 1 }}>
-              <Text style={styles.progressTitle}>
-                {home.completed} of {home.total} destinations completed
-              </Text>
-              <View style={styles.track}>
-                <View style={[styles.fill, { width: `${Math.round(pct * 100)}%` }]} />
-              </View>
-            </View>
-            <Icon name="chevron-right" size={24} color="#fff" />
-          </Pressable>
-
-          <Text style={[styles.heading, { color: text }]}>Browse by category</Text>
+          <Text style={[styles.categoryHeading, { color: text }]}>Where to?</Text>
+          <Text style={[styles.categorySubheading, { color: mutedText }]}>
+            Adventure starts here. Take your pick.
+          </Text>
           <View style={styles.grid}>
             {categories.map((c) => (
               <Pressable
                 key={c}
-                style={[styles.tile, { backgroundColor: categoryMeta[c].color }]}
+                style={styles.categoryCard}
                 onPress={() => navigation.navigate('Destinations', { category: c })}
                 accessibilityRole="button"
-                accessibilityLabel={`${c}, ${home.counts[c] || 0} destinations`}
+                accessibilityLabel={`${c} destinations`}
               >
-                <Icon name={categoryMeta[c].icon} size={28} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.tileName}>{c}</Text>
-                <Text style={styles.tileCount}>{home.counts[c] || 0} places</Text>
+                <ImageBackground
+                  source={
+                    c === 'Museum'
+                      ? require('../../images/meseum.jpg')
+                      : c === 'Historical'
+                      ? require('../../images/history.jpg')
+                      : c === 'Religious'
+                      ? require('../../images/religious.jpg')
+                      : c === 'Cultural'
+                      ? require('../../images/culture.jpg')
+                      : home.categoryImages[c]
+                      ? { uri: home.categoryImages[c] }
+                      : c === 'Nature' ? require('../../images/beach.jpeg') : undefined
+                  }
+                  style={[styles.categoryImage, { backgroundColor: categoryMeta[c].color }]}
+                  imageStyle={styles.categoryImageContent}
+                  resizeMode="cover"
+                >
+                  <View style={styles.categoryImageOverlay} />
+                  <Icon name={categoryMeta[c].icon} size={38} color="#FFFFFF" />
+                </ImageBackground>
+                <View style={[styles.categoryLabel, { backgroundColor: surface }]}>
+                  <Text style={[styles.categoryName, { color: text }]}>{c}</Text>
+                </View>
               </Pressable>
             ))}
-            <Pressable
-              style={[styles.tile, styles.tileAll, { backgroundColor: surface, borderColor: border }]}
-              onPress={() => navigation.navigate('Destinations', { category: 'All' })}
-              accessibilityRole="button"
-            >
-              <Icon name="map-search-outline" size={28} color={colors.primary} />
-              <Text style={[styles.tileName, { color: text }]}>All destinations</Text>
-              <Text style={[styles.tileCount, { color: mutedText }]}>{home.total} places</Text>
-            </Pressable>
           </View>
 
           <Text style={[styles.heading, { color: text }]}>Up next</Text>
@@ -143,13 +144,20 @@ const styles = StyleSheet.create({
   flag: { width: 84, height: 56, borderRadius: 6 },
   titleAccent: { fontWeight: '800', letterSpacing: 0.4 },
   sub: { fontSize: 16, lineHeight: 23, color: '#FFFFFF', marginTop: 8 },
-  progress: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary,
-    borderRadius: 12, padding: 16,
+  categoryHeading: {
+    fontFamily: fonts.sans,
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 18,
   },
-  progressTitle: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 10 },
-  track: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
-  fill: { height: 8, backgroundColor: colors.gold },
+  categorySubheading: {
+    fontSize: 16,
+    lineHeight: 23,
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 22,
+  },
   heading: {
     fontFamily: fonts.sans,
     fontSize: 20,
@@ -159,10 +167,42 @@ const styles = StyleSheet.create({
     marginTop: 26,
     marginBottom: 12,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
-  tile: { width: '48%', borderRadius: 12, padding: 14, minHeight: 104, justifyContent: 'space-between' },
-  tileAll: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line },
-  tileName: { color: '#fff', fontSize: 16, fontWeight: '700', marginTop: 8 },
-  tileCount: { color: 'rgba(255,255,255,0.85)', fontSize: 13 },
+  grid: { gap: 16 },
+  categoryCard: {
+    overflow: 'hidden',
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line,
+    shadowColor: '#14232A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  categoryImage: {
+    height: 180,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryImageContent: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  categoryImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(7, 24, 34, 0.18)',
+  },
+  categoryLabel: {
+    minHeight: 54,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  categoryName: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   empty: { color: colors.muted, fontSize: 15, lineHeight: 22 },
 });
