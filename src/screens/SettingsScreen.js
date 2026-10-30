@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, useWindowDimensions, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, useWindowDimensions, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -16,7 +16,6 @@ export default function SettingsScreen({ navigation }) {
   } = useAppTheme();
   const toggleRef = useRef(null);
   const transitionInProgress = useRef(false);
-  const iconScale = useRef(new Animated.Value(1)).current;
   const motionInfoRef = useRef(null);
   const [toggleError, setToggleError] = useState('');
   const [volumePreview, setVolumePreview] = useState(musicVolume);
@@ -53,13 +52,6 @@ export default function SettingsScreen({ navigation }) {
     setVolumePreview(musicVolume);
   }, [musicVolume]);
 
-  const animateToggleIcon = () => {
-    Animated.sequence([
-      Animated.timing(iconScale, { toValue: 0.1, duration: 100, useNativeDriver: Platform.OS !== 'web' }),
-      Animated.spring(iconScale, { toValue: 1, useNativeDriver: Platform.OS !== 'web', speed: 16, bounciness: 8 }),
-    ]).start();
-  };
-
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof document === 'undefined') return undefined;
     const style = document.createElement('style');
@@ -84,8 +76,7 @@ export default function SettingsScreen({ navigation }) {
     return () => style.remove();
   }, []);
 
-  const toggleTheme = async () => {
-    const nextIsDark = !isDark;
+  const toggleTheme = async (nextIsDark = !isDark) => {
     setToggleError('');
     const change = async () => {
       try {
@@ -121,7 +112,6 @@ export default function SettingsScreen({ navigation }) {
         const transition = document.startViewTransition(change);
         transition.ready.catch((error) => {
           console.warn('Theme reveal animation could not start:', error);
-          animateToggleIcon();
         });
         transition.finished.then(
           () => { transitionInProgress.current = false; },
@@ -134,9 +124,7 @@ export default function SettingsScreen({ navigation }) {
       }
       return;
     }
-
     await change();
-    animateToggleIcon();
   };
 
   const toggleMotionBlur = async (nextMotionBlur) => {
@@ -204,17 +192,17 @@ export default function SettingsScreen({ navigation }) {
 
       <View style={[styles.settingRow, { borderBottomColor: border }]}>
         <Text style={[styles.settingLabel, { color: text }]}>Dark theme</Text>
-        <Pressable
+        <Switch
           ref={toggleRef}
-          onPress={toggleTheme}
+          value={isDark}
+          onValueChange={toggleTheme}
+          trackColor={{ false: border, true: accent }}
+          thumbColor="#FFFFFF"
+          ios_backgroundColor={border}
           accessibilityRole="switch"
           accessibilityState={{ checked: isDark }}
           accessibilityLabel="Toggle dark theme"
-        >
-          <Animated.View style={{ transform: [{ scale: iconScale }] }}>
-            <Icon name={isDark ? 'moon-waning-crescent' : 'white-balance-sunny'} size={25} color={accent} />
-          </Animated.View>
-        </Pressable>
+        />
       </View>
       {themeError || toggleError ? <Text style={styles.error}>{toggleError || themeError}</Text> : null}
 
