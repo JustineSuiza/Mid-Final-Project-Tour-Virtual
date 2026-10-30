@@ -1,12 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Animated, Easing, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View,
+} from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useAppTheme } from '../ThemeContext';
-import { colors, fonts } from '../theme';
+import { MAX_WIDTH, colors, fonts } from '../theme';
 
 import HomeScreen from '../screens/HomeScreen';
 import DestinationListScreen from '../screens/DestinationListScreen';
@@ -103,10 +105,37 @@ function SlidingTabBar({ state, descriptors, navigation }) {
 }
 
 function Tabs() {
+  const { width } = useWindowDimensions();
+  const pageWidth = Platform.OS === 'web' ? Math.min(width, MAX_WIDTH) : width;
+
+  // Slide whole pages left or right depending on the tab order.
+  const forSlide = useCallback(
+    ({ current }) => ({
+      sceneStyle: {
+        transform: [
+          {
+            translateX: current.progress.interpolate({
+              inputRange: [-1, 0, 1],
+              outputRange: [-pageWidth, 0, pageWidth],
+            }),
+          },
+        ],
+      },
+    }),
+    [pageWidth]
+  );
+
   return (
     <Tab.Navigator
       tabBar={(props) => <SlidingTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        sceneStyleInterpolator: forSlide,
+        transitionSpec: {
+          animation: 'timing',
+          config: { duration: 300, easing: Easing.out(Easing.cubic) },
+        },
+      }}
     >
       <Tab.Screen name="Settings" component={SettingsScreen} />
       <Tab.Screen name="Destinations" component={DestinationListScreen} options={{ tabBarLabel: 'Places' }} />
@@ -170,6 +199,7 @@ export default function AppNavigator() {
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
         screenOptions={{
+          animation: 'slide_from_right',
           headerStyle: { backgroundColor: background },
           headerTintColor: text,
           headerTitleStyle: { fontFamily: fonts.serif, fontWeight: '700' },

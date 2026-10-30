@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -10,7 +11,7 @@ import { categories, categoryMeta, colors, fonts } from '../theme';
 
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { surface, text, mutedText, border } = useAppTheme();
+  const { surface, text, mutedText, border, background } = useAppTheme();
   const [home, setHome] = useState({ total: 0, completed: 0, counts: {}, upNext: [] });
 
   useFocusEffect(
@@ -22,15 +23,22 @@ export default function HomeScreen({ navigation }) {
   const pct = home.total ? home.completed / home.total : 0;
 
   return (
-    <ImageBackground source={require('../../images/beach.jpeg')} style={styles.background} resizeMode="cover">
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 20, paddingHorizontal: 12 }}
-      >
-        <View style={[styles.content, { backgroundColor: surface }]}>
-          <Text style={[styles.title, { color: text }]}>
-            Explore <Text style={[styles.titleAccent, { color: colors.primary }]}>CALABARZON</Text>
-          </Text>
+    <ScrollView
+      style={[styles.scroll, { backgroundColor: background }]}
+      contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 12, paddingBottom: 20 }}
+    >
+      <View style={[styles.content, { flex: 1 }]}>
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: text }]}>
+              Explore <Text style={[styles.titleAccent, { color: colors.primary }]}>CALABARZON</Text>
+            </Text>
+            <Image
+              source={require('../../images/flag.gif')}
+              style={styles.flag}
+              contentFit="cover"
+              accessibilityLabel="Philippine flag"
+            />
+          </View>
           <Text style={[styles.sub, { color: mutedText }]}>
             Visit heritage sites and natural wonders in Cavite, Laguna, Batangas, Rizal, and Quezon from wherever you are.
           </Text>
@@ -88,20 +96,17 @@ export default function HomeScreen({ navigation }) {
             ))
           )}
         </View>
-      </ScrollView>
-    </ImageBackground>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1 },
-  scroll: { flex: 1, backgroundColor: 'transparent' },
+  scroll: { flex: 1 },
   content: {
-    backgroundColor: colors.card,
-    borderRadius: 20,
     padding: 20,
   },
   title: {
+    flex: 1,
     fontFamily: fonts.sans,
     fontSize: 34,
     fontWeight: '800',
@@ -109,6 +114,8 @@ const styles = StyleSheet.create({
     lineHeight: 40,
     color: colors.ink,
   },
+  header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  flag: { width: 84, height: 56, borderRadius: 6 },
   titleAccent: { fontWeight: '800', letterSpacing: 0.4 },
   sub: { fontSize: 16, lineHeight: 23, color: colors.muted, marginTop: 8, marginBottom: 18 },
   progress: {

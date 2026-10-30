@@ -12,13 +12,15 @@ export const colors = {
   success: '#2F7D4F',
 };
 
+const sans = Platform.select({
+  ios: 'System',
+  android: 'sans-serif',
+  default: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+});
+
 export const fonts = {
-  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }),
-  sans: Platform.select({
-    ios: 'System',
-    android: 'sans-serif',
-    default: 'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-  }),
+  serif: sans,
+  sans,
 };
 
 export const categories = ['Historical', 'Cultural', 'Religious', 'Nature', 'Museum'];
