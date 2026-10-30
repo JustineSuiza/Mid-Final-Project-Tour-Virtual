@@ -5,6 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const ThemeContext = createContext(null);
 const STORAGE_KEY = 'calabarzon-tour-theme';
 const MOTION_KEY = 'calabarzon-tour-motion-blur';
+const MUSIC_ENABLED_KEY = 'calabarzon-tour-music-enabled';
+const MUSIC_VOLUME_KEY = 'calabarzon-tour-music-volume';
 
 export function ThemeProvider({ children }) {
   const systemScheme = useColorScheme();
@@ -12,6 +14,9 @@ export function ThemeProvider({ children }) {
   const [themeError, setThemeError] = useState('');
   const [motionBlur, setMotionBlurState] = useState(true);
   const [motionBlurError, setMotionBlurError] = useState('');
+  const [musicEnabled, setMusicEnabledState] = useState(false);
+  const [musicVolume, setMusicVolumeState] = useState(0.6);
+  const [musicError, setMusicError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -31,6 +36,26 @@ export function ThemeProvider({ children }) {
       if (active && saved !== null) setMotionBlurState(saved !== '0');
     }).catch((error) => {
       if (active) setMotionBlurError(`Could not load motion setting: ${error.message || error}`);
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      AsyncStorage.getItem(MUSIC_ENABLED_KEY),
+      AsyncStorage.getItem(MUSIC_VOLUME_KEY),
+    ]).then(([savedEnabled, savedVolume]) => {
+      if (!active) return;
+      if (savedEnabled !== null) setMusicEnabledState(savedEnabled === '1');
+      if (savedVolume !== null) {
+        const parsedVolume = Number(savedVolume);
+        if (Number.isFinite(parsedVolume)) {
+          setMusicVolumeState(Math.max(0, Math.min(1, parsedVolume)));
+        }
+      }
+    }).catch((error) => {
+      if (active) setMusicError(`Could not load music settings: ${error.message || error}`);
     });
     return () => { active = false; };
   }, []);
@@ -59,6 +84,31 @@ export function ThemeProvider({ children }) {
     }
   }, []);
 
+  const changeMusicEnabled = useCallback(async (nextEnabled) => {
+    try {
+      await AsyncStorage.setItem(MUSIC_ENABLED_KEY, nextEnabled ? '1' : '0');
+      setMusicEnabledState(nextEnabled);
+      setMusicError('');
+    } catch (error) {
+      const message = `Could not save music setting: ${error.message || error}`;
+      setMusicError(message);
+      throw new Error(message);
+    }
+  }, []);
+
+  const changeMusicVolume = useCallback(async (nextVolume) => {
+    const volume = Math.max(0, Math.min(1, nextVolume));
+    try {
+      await AsyncStorage.setItem(MUSIC_VOLUME_KEY, String(volume));
+      setMusicVolumeState(volume);
+      setMusicError('');
+    } catch (error) {
+      const message = `Could not save music volume: ${error.message || error}`;
+      setMusicError(message);
+      throw new Error(message);
+    }
+  }, []);
+
   const value = useMemo(() => ({
     isDark,
     setIsDark: changeTheme,
@@ -66,13 +116,21 @@ export function ThemeProvider({ children }) {
     motionBlur,
     setMotionBlur: changeMotionBlur,
     motionBlurError,
+    musicEnabled,
+    setMusicEnabled: changeMusicEnabled,
+    musicVolume,
+    setMusicVolume: changeMusicVolume,
+    musicError,
     background: isDark ? '#0D141C' : '#F2F4F2',
     surface: isDark ? '#16212D' : '#FFFFFF',
     text: isDark ? '#E8EEF5' : '#14232A',
     mutedText: isDark ? '#93A4B8' : '#5B6B72',
     border: isDark ? '#263646' : '#D9E0DE',
     accent: isDark ? '#6AA5FF' : '#0F4C5C',
-  }), [changeMotionBlur, changeTheme, isDark, motionBlur, motionBlurError, themeError]);
+  }), [
+    changeMotionBlur, changeMusicEnabled, changeMusicVolume, changeTheme, isDark, motionBlur,
+    motionBlurError, musicEnabled, musicError, musicVolume, themeError,
+  ]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }

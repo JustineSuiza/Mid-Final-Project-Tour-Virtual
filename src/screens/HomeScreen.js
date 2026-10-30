@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
-import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import DestinationCard from '../components/DestinationCard';
 import { getHomeData } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
@@ -79,10 +78,7 @@ export default function HomeScreen({ navigation }) {
                   style={[styles.categoryImage, { backgroundColor: categoryMeta[c].color }]}
                   imageStyle={styles.categoryImageContent}
                   resizeMode="cover"
-                >
-                  <View style={styles.categoryImageOverlay} />
-                  <Icon name={categoryMeta[c].icon} size={38} color="#FFFFFF" />
-                </ImageBackground>
+                />
                 <View style={[styles.categoryLabel, { backgroundColor: surface }]}>
                   <Text style={[styles.categoryName, { color: text }]}>{c}</Text>
                 </View>
@@ -169,6 +165,9 @@ const styles = StyleSheet.create({
   },
   grid: { gap: 16 },
   categoryCard: {
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
     overflow: 'hidden',
     borderRadius: 16,
     backgroundColor: colors.card,
@@ -181,17 +180,12 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   categoryImage: {
-    height: 180,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '100%',
+    aspectRatio: 16 / 9,
   },
   categoryImageContent: {
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-  },
-  categoryImageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(7, 24, 34, 0.18)',
   },
   categoryLabel: {
     minHeight: 54,
