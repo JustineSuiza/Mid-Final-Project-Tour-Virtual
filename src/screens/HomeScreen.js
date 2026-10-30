@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import DestinationCard from '../components/DestinationCard';
 import { getHomeData } from '../db/database';
@@ -10,7 +9,6 @@ import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
 
 export default function HomeScreen({ navigation }) {
-  const insets = useSafeAreaInsets();
   const { surface, text, mutedText, border, background } = useAppTheme();
   const [home, setHome] = useState({ total: 0, completed: 0, counts: {}, upNext: [] });
 
@@ -25,23 +23,35 @@ export default function HomeScreen({ navigation }) {
   return (
     <ScrollView
       style={[styles.scroll, { backgroundColor: background }]}
-      contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 12, paddingBottom: 20 }}
+      contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
     >
       <View style={[styles.content, { flex: 1 }]}>
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: text }]}>
-              Explore <Text style={[styles.titleAccent, { color: colors.primary }]}>CALABARZON</Text>
+        <View style={styles.hero}>
+          <Image
+            source={require('../../images/beach.jpeg')}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+            contentPosition="top"
+            accessibilityLabel="Beach landscape"
+          />
+          <View style={styles.heroOverlay} />
+          <View style={styles.heroContent}>
+            <View style={styles.header}>
+              <Text style={[styles.title, { color: '#FFFFFF' }]}>
+                Explore <Text style={[styles.titleAccent, { color: '#F6D278' }]}>CALABARZON</Text>
+              </Text>
+              <Image
+                source={require('../../images/flag.gif')}
+                style={styles.flag}
+                contentFit="cover"
+                accessibilityLabel="Philippine flag"
+              />
+            </View>
+            <Text style={styles.sub}>
+              Visit heritage sites and natural wonders in Cavite, Laguna, Batangas, Rizal, and Quezon from wherever you are.
             </Text>
-            <Image
-              source={require('../../images/flag.gif')}
-              style={styles.flag}
-              contentFit="cover"
-              accessibilityLabel="Philippine flag"
-            />
           </View>
-          <Text style={[styles.sub, { color: mutedText }]}>
-            Visit heritage sites and natural wonders in Cavite, Laguna, Batangas, Rizal, and Quezon from wherever you are.
-          </Text>
+        </View>
 
           <Pressable style={styles.progress} onPress={() => navigation.navigate('Progress')} accessibilityRole="button">
             <View style={{ flex: 1 }}>
@@ -105,6 +115,24 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
   },
+  hero: {
+    position: 'relative',
+    overflow: 'hidden',
+    height: 300,
+    flexShrink: 0,
+    marginHorizontal: -20,
+    marginTop: -20,
+    marginBottom: 18,
+  },
+  heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(7, 24, 34, 0.38)',
+  },
+  heroContent: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: 24,
+  },
   title: {
     flex: 1,
     fontFamily: fonts.sans,
@@ -117,7 +145,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   flag: { width: 84, height: 56, borderRadius: 6 },
   titleAccent: { fontWeight: '800', letterSpacing: 0.4 },
-  sub: { fontSize: 16, lineHeight: 23, color: colors.muted, marginTop: 8, marginBottom: 18 },
+  sub: { fontSize: 16, lineHeight: 23, color: '#FFFFFF', marginTop: 8 },
   progress: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary,
     borderRadius: 12, padding: 16,
