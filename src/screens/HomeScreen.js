@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -26,15 +26,13 @@ export default function HomeScreen({ navigation }) {
       contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
     >
       <View style={[styles.content, { flex: 1 }]}>
-        <View style={styles.hero}>
-          <Image
-            source={require('../../images/beach.jpeg')}
-            style={StyleSheet.absoluteFillObject}
-            contentFit="cover"
-            contentPosition="top"
-            accessibilityLabel="Beach landscape"
-          />
-          <View style={styles.heroOverlay} />
+        <ImageBackground
+          source={require('../../images/beach.jpeg')}
+          style={styles.hero}
+          resizeMode="cover"
+          accessibilityLabel="Beach landscape"
+        >
+          <View style={[StyleSheet.absoluteFillObject, styles.heroOverlay]} />
           <View style={styles.heroContent}>
             <View style={styles.header}>
               <Text style={[styles.title, { color: '#FFFFFF' }]}>
@@ -51,7 +49,7 @@ export default function HomeScreen({ navigation }) {
               Visit heritage sites and natural wonders in Cavite, Laguna, Batangas, Rizal, and Quezon from wherever you are.
             </Text>
           </View>
-        </View>
+        </ImageBackground>
 
           <Pressable style={styles.progress} onPress={() => navigation.navigate('Progress')} accessibilityRole="button">
             <View style={{ flex: 1 }}>
@@ -125,7 +123,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(7, 24, 34, 0.38)',
   },
   heroContent: {
