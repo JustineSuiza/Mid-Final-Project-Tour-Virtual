@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useAppTheme } from '../ThemeContext';
@@ -7,7 +7,7 @@ import { colors, fonts } from '../theme';
 
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { isDark, setIsDark, themeError, background, surface, text, mutedText, border, accent } = useAppTheme();
+  const { isDark, setIsDark, themeError, motionBlur, setMotionBlur, motionBlurError, background, surface, text, mutedText, border, accent } = useAppTheme();
   const toggleRef = useRef(null);
   const transitionInProgress = useRef(false);
   const iconScale = useRef(new Animated.Value(1)).current;
@@ -99,13 +99,21 @@ export default function SettingsScreen({ navigation }) {
     animateToggleIcon();
   };
 
+  const toggleMotionBlur = async (nextMotionBlur) => {
+    try {
+      await setMotionBlur(nextMotionBlur);
+    } catch (error) {
+      // The error message is exposed through motionBlurError.
+    }
+  };
+
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: background }]}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
     >
       <Text style={[styles.title, { color: text }]}>Settings</Text>
-      <Text style={[styles.subtitle, { color: mutedText }]}>Manage app appearance and learn how your tour data is stored.</Text>
+      <Text style={[styles.subtitle, { color: mutedText }]}>Manage app appearance, navigation, and learn how your tour data is stored.</Text>
 
       <Text style={[styles.sectionTitle, { color: text }]}>Appearance</Text>
       <View style={[styles.themeCard, { backgroundColor: surface, borderColor: border }]}>
@@ -129,6 +137,27 @@ export default function SettingsScreen({ navigation }) {
         </Pressable>
       </View>
       {themeError || toggleError ? <Text style={styles.error}>{toggleError || themeError}</Text> : null}
+
+      <Text style={[styles.sectionTitle, { color: text }]}>Navigation</Text>
+      <View style={[styles.themeCard, { backgroundColor: surface, borderColor: border }]}>
+        <View style={styles.themeCopy}>
+          <Text style={[styles.cardTitle, { color: text }]}>Motion blur</Text>
+          <Text style={[styles.description, { color: mutedText }]}>
+            {motionBlur ? 'The tab circle stretches as it slides' : 'The tab circle moves without stretching'}
+          </Text>
+        </View>
+        <Switch
+          value={motionBlur}
+          onValueChange={toggleMotionBlur}
+          trackColor={{ false: border, true: accent }}
+          thumbColor="#FFFFFF"
+          ios_backgroundColor={border}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: motionBlur }}
+          accessibilityLabel="Toggle motion blur"
+        />
+      </View>
+      {motionBlurError ? <Text style={styles.error}>{motionBlurError}</Text> : null}
 
       <Text style={[styles.sectionTitle, { color: text }]}>Data and privacy</Text>
       <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
