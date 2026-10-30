@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "CalabarzonTour",
+    "slug": "calabarzon-tour",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-font"
+    ]
+  }
+}
