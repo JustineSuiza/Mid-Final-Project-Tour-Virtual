@@ -6,6 +6,8 @@ export const SEED_DESTINATIONS = [
     category: 'Historical',
     province: 'Cavite',
     address: 'Kawit, Cavite',
+    latitude: 14.445,
+    longitude: 120.90694,
     description:
       'The ancestral house of General Emilio Aguinaldo, where Philippine independence was proclaimed on June 12, 1898. Today it is kept as a national shrine and museum.',
     history:

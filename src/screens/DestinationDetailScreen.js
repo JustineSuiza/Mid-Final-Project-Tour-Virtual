@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import Button from '../components/Button';
 import DestinationImage from '../components/DestinationImage';
+import MapLocation from '../components/MapLocation';
 import { useAppTheme } from '../ThemeContext';
 import {
   deleteDestination, getDestination, getProgress, getQuestionCount, setCompleted,
@@ -113,6 +114,13 @@ export default function DestinationDetailScreen({ route, navigation }) {
             onPress={() => navigation.navigate('QuizEditor', { destinationId: id, name: dest.name })} />
           <Button label="Delete" icon="trash-can-outline" variant="danger" style={{ flex: 1 }} onPress={confirmDelete} />
         </View>
+
+        <MapLocation
+          name={dest.name}
+          address={dest.address}
+          latitude={dest.latitude}
+          longitude={dest.longitude}
+        />
       </View>
     </ScrollView>
   );

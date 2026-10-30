@@ -35,6 +35,8 @@ export async function initDatabase() {
       province TEXT,
       category TEXT NOT NULL,
       imageUri TEXT,
+      latitude REAL,
+      longitude REAL,
       history TEXT,
       significance TEXT,
       tourUrl TEXT,
@@ -72,6 +74,20 @@ export async function initDatabase() {
     await seedDatabase(db);
     await db.execAsync('PRAGMA user_version = 1');
   }
+
+  // Older installs were created before map coordinates existed.
+  const columns = (await db.getAllAsync('PRAGMA table_info(destinations)')).map((c) => c.name);
+  if (!columns.includes('latitude')) await db.execAsync('ALTER TABLE destinations ADD COLUMN latitude REAL');
+  if (!columns.includes('longitude')) await db.execAsync('ALTER TABLE destinations ADD COLUMN longitude REAL');
+
+  for (const d of SEED_DESTINATIONS) {
+    if (d.latitude == null || d.longitude == null) continue;
+    await db.runAsync(
+      `UPDATE destinations SET latitude = ?, longitude = ?
+        WHERE name = ? AND (latitude IS NULL OR longitude IS NULL)`,
+      [d.latitude, d.longitude, d.name]
+    );
+  }
 }
 
 async function seedDatabase(db) {
@@ -79,9 +95,9 @@ async function seedDatabase(db) {
     for (const d of SEED_DESTINATIONS) {
       const r = await db.runAsync(
         `INSERT INTO destinations
-           (name, description, address, province, category, imageUri, history, significance, tourUrl, photos)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [d.name, d.description, d.address, d.province, d.category, null, d.history, d.significance, null, '[]']
+           (name, description, address, province, category, imageUri, latitude, longitude, history, significance, tourUrl, photos)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [d.name, d.description, d.address, d.province, d.category, null, d.latitude ?? null, d.longitude ?? null, d.history, d.significance, null, '[]']
       );
       for (const q of d.quiz) {
         await db.runAsync(
@@ -124,11 +140,12 @@ export async function createDestination(d) {
   const db = await getDb();
   const r = await db.runAsync(
     `INSERT INTO destinations
-       (name, description, address, province, category, imageUri, history, significance, tourUrl, photos)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (name, description, address, province, category, imageUri, latitude, longitude, history, significance, tourUrl, photos)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       d.name, d.description, d.address, d.province, d.category,
-      d.imageUri || null, d.history || null, d.significance || null,
+      d.imageUri || null, d.latitude ?? null, d.longitude ?? null,
+      d.history || null, d.significance || null,
       d.tourUrl || null, JSON.stringify(d.photos || []),
     ]
   );

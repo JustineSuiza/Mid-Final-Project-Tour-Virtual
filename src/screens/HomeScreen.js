@@ -28,7 +28,9 @@ export default function HomeScreen({ navigation }) {
         contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 20, paddingHorizontal: 12 }}
       >
         <View style={[styles.content, { backgroundColor: surface }]}>
-          <Text style={[styles.title, { color: text }]}>Explore CALABARZON</Text>
+          <Text style={[styles.title, { color: text }]}>
+            Explore <Text style={[styles.titleAccent, { color: colors.primary }]}>CALABARZON</Text>
+          </Text>
           <Text style={[styles.sub, { color: mutedText }]}>
             Visit heritage sites and natural wonders in Cavite, Laguna, Batangas, Rizal, and Quezon from wherever you are.
           </Text>
@@ -99,7 +101,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
   },
-  title: { fontFamily: fonts.serif, fontSize: 32, fontWeight: '700', color: colors.ink },
+  title: {
+    fontFamily: fonts.sans,
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -0.8,
+    lineHeight: 40,
+    color: colors.ink,
+  },
+  titleAccent: { fontWeight: '800', letterSpacing: 0.4 },
   sub: { fontSize: 16, lineHeight: 23, color: colors.muted, marginTop: 8, marginBottom: 18 },
   progress: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.primary,
@@ -108,7 +118,15 @@ const styles = StyleSheet.create({
   progressTitle: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 10 },
   track: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
   fill: { height: 8, backgroundColor: colors.gold },
-  heading: { fontFamily: fonts.serif, fontSize: 22, fontWeight: '700', color: colors.ink, marginTop: 26, marginBottom: 12 },
+  heading: {
+    fontFamily: fonts.sans,
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    color: colors.ink,
+    marginTop: 26,
+    marginBottom: 12,
+  },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
   tile: { width: '48%', borderRadius: 12, padding: 14, minHeight: 104, justifyContent: 'space-between' },
   tileAll: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.line },

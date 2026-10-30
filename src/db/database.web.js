@@ -61,7 +61,8 @@ function buildSeed() {
     const id = s.nextId.destination++;
     s.destinations.push({
       id, name: d.name, description: d.description, address: d.address, province: d.province,
-      category: d.category, imageUri: null, history: d.history, significance: d.significance,
+      category: d.category, imageUri: null, latitude: d.latitude ?? null, longitude: d.longitude ?? null,
+      history: d.history, significance: d.significance,
       tourUrl: null, photos: [], createdAt: new Date().toISOString(),
     });
     for (const q of d.quiz) {
@@ -79,7 +80,21 @@ export async function initDatabase() {
   if (!state) {
     state = buildSeed();
     await save();
+    return;
   }
+
+  // Seed records saved before map coordinates existed get them once here.
+  let changed = false;
+  for (const d of SEED_DESTINATIONS) {
+    if (d.latitude == null || d.longitude == null) continue;
+    const saved = state.destinations.find((x) => x.name === d.name);
+    if (saved && (saved.latitude == null || saved.longitude == null)) {
+      saved.latitude = d.latitude;
+      saved.longitude = d.longitude;
+      changed = true;
+    }
+  }
+  if (changed) await save();
 }
 
 /* ----------------------- destinations (CRUD) ---------------------- */
