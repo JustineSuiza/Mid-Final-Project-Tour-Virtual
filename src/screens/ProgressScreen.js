@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -9,8 +9,12 @@ import { categoryMeta, colors, fonts } from '../theme';
 
 export default function ProgressScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { background, surface, text, mutedText, border } = useAppTheme();
+  const { background, surface, text, mutedText, border, accent } = useAppTheme();
   const [data, setData] = useState({ total: 0, completed: 0, avgBest: null, destinations: [], recent: [] });
+  const [displayRecent, setDisplayRecent] = useState(false);
+  const contentOpacity = useRef(new Animated.Value(1)).current;
+  const contentShift = useRef(new Animated.Value(0)).current;
+  const transitioning = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -19,6 +23,37 @@ export default function ProgressScreen({ navigation }) {
   );
 
   const pct = data.total ? data.completed / data.total : 0;
+
+  const toggleView = useCallback(() => {
+    if (transitioning.current) return;
+    transitioning.current = true;
+    const next = !displayRecent;
+    Animated.timing(contentOpacity, {
+      toValue: 0,
+      duration: 130,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => {
+      setDisplayRecent(next);
+      contentShift.setValue(next ? 16 : -16);
+      Animated.parallel([
+        Animated.timing(contentOpacity, {
+          toValue: 1,
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(contentShift, {
+          toValue: 0,
+          duration: 240,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        transitioning.current = false;
+      });
+    });
+  }, [contentOpacity, contentShift, displayRecent]);
 
   return (
     <ScrollView
@@ -42,45 +77,87 @@ export default function ProgressScreen({ navigation }) {
         <View style={[styles.fill, { width: `${Math.round(pct * 100)}%` }]} />
       </View>
 
-      <Text style={[styles.heading, { color: text }]}>Destinations</Text>
-      {data.destinations.map((d) => {
-        const meta = categoryMeta[d.category] || categoryMeta.Cultural;
-        return (
-          <Pressable
-            key={d.id}
-            style={[styles.row, { backgroundColor: surface, borderColor: border }]}
-            onPress={() => navigation.navigate('DestinationDetail', { id: d.id })}
-            accessibilityRole="button"
-          >
-            <Icon
-              name={d.completed === 1 ? 'check-circle' : 'circle-outline'}
-              size={24}
-              color={d.completed === 1 ? colors.success : mutedText}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.rowName, { color: text }]} numberOfLines={1}>{d.name}</Text>
-              <Text style={[styles.rowSub, { color: meta.color }]}>{d.category}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={[styles.score, { color: text }]}>{d.totalQuestions ? `${d.bestScore}/${d.totalQuestions}` : 'No score'}</Text>
-              <Text style={[styles.rowSub, { color: mutedText }]}>{d.attempts} {d.attempts === 1 ? 'attempt' : 'attempts'}</Text>
-            </View>
-          </Pressable>
-        );
-      })}
-
-      <Text style={[styles.heading, { color: text }]}>Recent quiz attempts</Text>
-      {data.recent.length === 0 ? (
-        <Text style={[styles.empty, { color: mutedText }]}>No quizzes taken yet. Open a destination and take its quiz to see your scores here.</Text>
-      ) : (
-        data.recent.map((a) => (
-          <View key={a.id} style={[styles.attempt, { borderBottomColor: border }]}>
-            <Text style={[styles.rowName, { color: text }]} numberOfLines={1}>{a.name}</Text>
-            <Text style={[styles.score, { color: text }]}>{a.score}/{a.total}</Text>
-            <Text style={[styles.rowSub, { color: mutedText }]}>{String(a.takenAt).slice(0, 10)}</Text>
-          </View>
-        ))
-      )}
+      <View style={styles.headingRow}>
+        <Animated.Text
+          style={[
+            styles.heading,
+            {
+              color: text,
+              marginTop: 0,
+              marginBottom: 0,
+              opacity: contentOpacity,
+              transform: [{ translateY: contentShift }],
+            },
+          ]}
+        >
+          {displayRecent ? 'Recent quiz attempts' : 'Destinations'}
+        </Animated.Text>
+        <Pressable
+          onPress={toggleView}
+          style={[
+            styles.filterButton,
+            { borderColor: border, backgroundColor: displayRecent ? accent : surface },
+          ]}
+          accessibilityRole="button"
+          accessibilityState={{ selected: displayRecent }}
+          accessibilityLabel={
+            displayRecent ? 'Show destinations' : 'Show recent quiz attempts'
+          }
+          hitSlop={6}
+        >
+          <Icon
+            name={displayRecent ? 'filter-variant-minus' : 'filter-variant'}
+            size={20}
+            color={displayRecent ? '#FFFFFF' : mutedText}
+          />
+        </Pressable>
+      </View>
+      <Animated.View
+        style={{
+          opacity: contentOpacity,
+          transform: [{ translateY: contentShift }],
+        }}
+      >
+        {displayRecent ? (
+          data.recent.length === 0 ? (
+            <Text style={[styles.empty, { color: mutedText }]}>No quizzes taken yet. Open a destination and take its quiz to see your scores here.</Text>
+          ) : (
+            data.recent.map((a) => (
+              <View key={a.id} style={[styles.attempt, { borderBottomColor: border }]}>
+                <Text style={[styles.rowName, { color: text }]} numberOfLines={1}>{a.name}</Text>
+                <Text style={[styles.score, { color: text }]}>{a.score}/{a.total}</Text>
+                <Text style={[styles.rowSub, { color: mutedText }]}>{String(a.takenAt).slice(0, 10)}</Text>
+              </View>
+            ))
+          )
+        ) : (
+          data.destinations.map((d) => {
+            const meta = categoryMeta[d.category] || categoryMeta.Cultural;
+            return (
+              <Pressable
+                key={d.id}
+                style={[styles.row, { backgroundColor: surface, borderColor: border }]}
+                onPress={() => navigation.navigate('DestinationDetail', { id: d.id })}
+                accessibilityRole="button"
+              >
+                <Icon
+                  name={d.completed === 1 ? 'check-circle' : 'circle-outline'}
+                  size={24}
+                  color={d.completed === 1 ? colors.success : mutedText}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.rowName, { color: text }]} numberOfLines={1}>{d.name}</Text>
+                  <Text style={[styles.rowSub, { color: meta.color }]}>{d.category}</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={[styles.score, { color: text }]}>{d.totalQuestions ? `${d.bestScore}/${d.totalQuestions}` : 'No score'}</Text>
+                  <Text style={[styles.rowSub, { color: mutedText }]}>{d.attempts} {d.attempts === 1 ? 'attempt' : 'attempts'}</Text>
+                </View>
+              </Pressable>
+            );
+          })
+        )}
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -96,6 +173,14 @@ const styles = StyleSheet.create({
   track: { height: 8, borderRadius: 4, backgroundColor: colors.line, marginTop: 12, overflow: 'hidden' },
   fill: { height: 8, backgroundColor: colors.gold },
   heading: { fontFamily: fonts.serif, fontSize: 21, fontWeight: '700', color: colors.ink, marginTop: 28, marginBottom: 10 },
+  headingRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: 28, marginBottom: 10,
+  },
+  filterButton: {
+    width: 38, height: 38, borderRadius: 19, borderWidth: 1,
+    alignItems: 'center', justifyContent: 'center',
+  },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderWidth: 1,
     borderColor: colors.line, borderRadius: 12, padding: 12, marginBottom: 8,
