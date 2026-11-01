@@ -10,7 +10,7 @@ import { categories, categoryMeta, colors, fonts } from '../theme';
 
 export default function DestinationListScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
-  const { background, surface, text, mutedText, border } = useAppTheme();
+  const { background, surface, text, mutedText, border, accent } = useAppTheme();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [items, setItems] = useState([]);
@@ -56,31 +56,43 @@ export default function DestinationListScreen({ navigation, route }) {
       <Text style={[styles.title, { color: text }]}>Destinations</Text>
 
       <View style={styles.searchWrap}>
-        <View style={[styles.search, { backgroundColor: surface, borderColor: border }]}>
-          <Icon name="magnify" size={20} color={mutedText} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search by name, place, or description"
-            placeholderTextColor="#8A979C"
-            style={[styles.input, { color: text }]}
-            returnKeyType="search"
-            autoCorrect={false}
-          />
-          {search ? (
-            <Pressable onPress={() => setSearch('')} accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={10}>
-              <Icon name="close-circle" size={18} color={mutedText} />
-            </Pressable>
-          ) : null}
+        <View style={styles.searchRow}>
+          <View style={[styles.search, { backgroundColor: surface, borderColor: border }]}>
+            <Icon name="magnify" size={26} color={mutedText} style={styles.searchIcon} />
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search by name, place, or description"
+              placeholderTextColor="#8A979C"
+              style={[styles.input, { color: text }]}
+              returnKeyType="search"
+              autoCorrect={false}
+            />
+            {search ? (
+              <Pressable onPress={() => setSearch('')} accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={10}>
+                <Icon name="close-circle" size={18} color={mutedText} />
+              </Pressable>
+            ) : null}
+          </View>
           <Pressable
-            style={[styles.filterButton, filterOpen && styles.filterButtonOpen]}
+            style={[
+              styles.filterButton,
+              { backgroundColor: surface, borderColor: border },
+              (filterOpen || selectedCategories.length > 0) && { borderColor: accent },
+            ]}
             onPress={() => setFilterOpen((open) => !open)}
             accessibilityRole="button"
             accessibilityState={{ expanded: filterOpen }}
             accessibilityLabel={`Filter destinations${selectedCategories.length ? ` by ${selectedCategories.join(', ')}` : ''}`}
           >
-            <Icon name="filter-variant" size={21} color={selectedCategories.length ? colors.primary : colors.muted} />
-            {selectedCategories.length > 0 ? <View style={styles.filterDot} /> : null}
+            <Icon
+              name="filter-variant"
+              size={22}
+              color={filterOpen || selectedCategories.length ? accent : mutedText}
+            />
+            {selectedCategories.length > 0 ? (
+              <View style={[styles.filterDot, { backgroundColor: accent }]} />
+            ) : null}
           </Pressable>
         </View>
         <Animated.View
@@ -163,24 +175,26 @@ export default function DestinationListScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   title: { fontFamily: fonts.serif, fontSize: 30, fontWeight: '700', color: colors.ink, paddingHorizontal: 20, marginBottom: 12 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   search: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderWidth: 1,
-    borderColor: colors.line, borderRadius: 12, paddingHorizontal: 14, height: 48,
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff',
+    borderWidth: 1, borderColor: colors.line, borderRadius: 25, paddingHorizontal: 14, height: 50,
   },
+  searchIcon: { opacity: 0.55 },
   searchWrap: { position: 'relative', zIndex: 2, marginHorizontal: 20, marginBottom: 10 },
-  input: { flex: 1, fontSize: 16, color: colors.ink },
+  input: { flex: 1, fontSize: 16, color: colors.ink, paddingVertical: 0 },
   filterButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filterButtonOpen: { backgroundColor: '#E8F0EF' },
   filterDot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: 9,
+    right: 9,
     width: 7,
     height: 7,
     borderRadius: 4,
@@ -188,7 +202,7 @@ const styles = StyleSheet.create({
   },
   filterDropdown: {
     position: 'absolute',
-    top: 54,
+    top: 58,
     right: 0,
     width: 184,
     overflow: 'hidden',
