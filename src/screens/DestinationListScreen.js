@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Easing, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -7,6 +7,32 @@ import DestinationCard from '../components/DestinationCard';
 import { getDestinations } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
+
+function AnimatedDestinationCard({ item, index, filterKey, onPress }) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 280,
+      delay: Math.min(index, 5) * 35,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [filterKey, index, progress]);
+
+  return (
+    <Animated.View
+      style={{
+        opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0.35, 1] }),
+        transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }],
+      }}
+    >
+      <DestinationCard item={item} onPress={onPress} />
+    </Animated.View>
+  );
+}
 
 export default function DestinationListScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -43,6 +69,7 @@ export default function DestinationListScreen({ navigation, route }) {
   );
 
   const filtering = search.trim() !== '' || selectedCategories.length > 0;
+  const filterKey = `${search.trim()}|${selectedCategories.join(',')}`;
   const toggleCategory = (option) => {
     setSelectedCategories((current) =>
       current.includes(option)
@@ -103,7 +130,7 @@ export default function DestinationListScreen({ navigation, route }) {
             styles.filterDropdown,
             { backgroundColor: surface, borderColor: border },
             {
-              height: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 232] }),
+              maxHeight: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 200] }),
               opacity: filterAnimation,
               transform: [{ translateY: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
             },
@@ -118,7 +145,7 @@ export default function DestinationListScreen({ navigation, route }) {
             accessibilityRole="checkbox"
             accessibilityState={{ checked: selectedCategories.length === 0 }}
           >
-            <Text style={[styles.filterOptionText, { color: text }]}>All categories</Text>
+            <Text style={[styles.filterOptionText, { color: text }]}>All</Text>
             {selectedCategories.length === 0 ? <Icon name="check" size={16} color={colors.primary} /> : null}
           </Pressable>
           {categories.map((option) => {
@@ -127,15 +154,13 @@ export default function DestinationListScreen({ navigation, route }) {
             return (
               <Pressable
                 key={option}
-                style={[styles.filterOption, { borderBottomColor: border }]}
+                style={styles.filterOption}
                 onPress={() => toggleCategory(option)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: selected }}
               >
                 <Text style={[styles.filterOptionText, { color: text }]} numberOfLines={1}>{option}</Text>
-                <View style={[styles.checkbox, selected && { backgroundColor: tint, borderColor: tint }]}>
-                  {selected ? <Icon name="check" size={13} color="#fff" /> : null}
-                </View>
+                {selected ? <Icon name="check" size={16} color={tint} /> : null}
               </Pressable>
             );
           })}
@@ -146,8 +171,13 @@ export default function DestinationListScreen({ navigation, route }) {
         data={items}
         keyExtractor={(i) => String(i.id)}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 }}
-        renderItem={({ item }) => (
-          <DestinationCard item={item} onPress={() => navigation.navigate('DestinationDetail', { id: item.id })} />
+        renderItem={({ item, index }) => (
+          <AnimatedDestinationCard
+            item={item}
+            index={index}
+            filterKey={filterKey}
+            onPress={() => navigation.navigate('DestinationDetail', { id: item.id })}
+          />
         )}
         ListEmptyComponent={
           <View style={{ paddingVertical: 40 }}>
@@ -204,13 +234,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 58,
     right: 0,
-    width: 184,
+    width: 152,
     overflow: 'hidden',
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.line,
     borderRadius: 12,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     elevation: 8,
     shadowColor: '#14232A',
     shadowOffset: { width: 0, height: 4 },
@@ -220,22 +250,11 @@ const styles = StyleSheet.create({
   filterOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 36,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.line,
+    gap: 10,
+    minHeight: 30,
+    paddingHorizontal: 6,
   },
   filterOptionText: { fontSize: 13, color: colors.ink, fontWeight: '600' },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: colors.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   fab: {
     position: 'absolute', right: 20, width: 58, height: 58, borderRadius: 29,
     backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center',
