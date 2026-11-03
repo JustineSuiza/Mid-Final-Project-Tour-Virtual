@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initDatabase } from './src/db/database';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useAppTheme } from './src/ThemeContext';
+import { AccountProvider } from './src/AccountContext';
 import { MAX_WIDTH, colors } from './src/theme';
 
 function AppContent() {
@@ -53,9 +54,11 @@ export default function App() {
   }
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
+      <AccountProvider>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
+      </AccountProvider>
     </SafeAreaProvider>
   );
 }

@@ -1,52 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useAppTheme } from '../ThemeContext';
 import { colors, fonts } from '../theme';
 
-export default function SettingsScreen({ navigation }) {
+export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const {
-    isDark, setIsDark, themeError, motionBlur, setMotionBlur, motionBlurError,
+    isDark, setIsDark, themeError,
     musicEnabled, setMusicEnabled, musicVolume, setMusicVolume, musicError,
     background, surface, text, mutedText, border, accent,
   } = useAppTheme();
   const toggleRef = useRef(null);
   const transitionInProgress = useRef(false);
-  const motionInfoRef = useRef(null);
   const [toggleError, setToggleError] = useState('');
   const [volumePreview, setVolumePreview] = useState(musicVolume);
-  const [motionInfoVisible, setMotionInfoVisible] = useState(false);
-  const [motionInfoPosition, setMotionInfoPosition] = useState({ left: 0, top: 0, pointerLeft: 18 });
-
-  const showMotionInfo = (x, y, width, height) => {
-    const popupWidth = Math.min(240, windowWidth - 24);
-    const left = Math.max(12, Math.min(windowWidth - popupWidth - 12, x + width / 2 - popupWidth / 2));
-    const popupHeight = 120;
-    const belowTop = y + height + 8;
-    const top = belowTop + popupHeight <= windowHeight - 12
-      ? belowTop
-      : Math.max(12, y - popupHeight - 8);
-    const pointerLeft = Math.max(12, Math.min(popupWidth - 20, x + width / 2 - left - 6));
-
-    setMotionInfoPosition({ left, top, pointerLeft });
-    setMotionInfoVisible(true);
-  };
-
-  const openMotionInfo = () => {
-    const button = motionInfoRef.current;
-    if (Platform.OS === 'web' && button?.getBoundingClientRect) {
-      const bounds = button.getBoundingClientRect();
-      showMotionInfo(bounds.left, bounds.top, bounds.width, bounds.height);
-    } else if (button?.measureInWindow) {
-      button.measureInWindow(showMotionInfo);
-    } else {
-      showMotionInfo(windowWidth / 2, windowHeight / 2, 0, 0);
-    }
-  };
 
   useEffect(() => {
     setVolumePreview(musicVolume);
@@ -127,14 +97,6 @@ export default function SettingsScreen({ navigation }) {
     await change();
   };
 
-  const toggleMotionBlur = async (nextMotionBlur) => {
-    try {
-      await setMotionBlur(nextMotionBlur);
-    } catch (error) {
-      // The error message is exposed through motionBlurError.
-    }
-  };
-
   const toggleMusic = async (nextEnabled) => {
     try {
       await setMusicEnabled(nextEnabled);
@@ -206,57 +168,6 @@ export default function SettingsScreen({ navigation }) {
       </View>
       {themeError || toggleError ? <Text style={styles.error}>{toggleError || themeError}</Text> : null}
 
-      <View style={[styles.settingRow, { borderBottomColor: border }]}>
-        <View style={styles.motionLabelGroup}>
-          <Text style={[styles.settingLabel, { color: text, flex: 0 }]}>Motion blur</Text>
-          <Pressable
-            ref={motionInfoRef}
-            style={styles.infoButton}
-            onPress={openMotionInfo}
-            accessibilityRole="button"
-            accessibilityLabel="About motion blur"
-          >
-            <Icon name="information-outline" size={22} color={mutedText} />
-          </Pressable>
-        </View>
-        <Switch
-          value={motionBlur}
-          onValueChange={toggleMotionBlur}
-          trackColor={{ false: border, true: accent }}
-          thumbColor="#FFFFFF"
-          ios_backgroundColor={border}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: motionBlur }}
-          accessibilityLabel="Toggle motion blur"
-        />
-      </View>
-      {motionBlurError ? <Text style={styles.error}>{motionBlurError}</Text> : null}
-
-      <Modal
-        visible={motionInfoVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMotionInfoVisible(false)}
-      >
-        <View style={styles.tooltipLayer}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={() => setMotionInfoVisible(false)}
-            accessibilityRole="button"
-            accessibilityLabel="Close motion blur details"
-          />
-          <View style={[
-            styles.notice,
-            { left: motionInfoPosition.left, top: motionInfoPosition.top, backgroundColor: surface },
-          ]}>
-            <View style={[styles.tooltipPointer, { left: motionInfoPosition.pointerLeft, backgroundColor: surface }]} />
-            <Text style={[styles.noticeText, { color: text }]}>
-              Adds a brief stretch and trailing effect to the moving tab selector as you switch sections. Turn it off for a simpler motion effect.
-            </Text>
-          </View>
-        </View>
-      </Modal>
-
       <Text style={[styles.sectionTitle, { color: text }]}>Data and privacy</Text>
       <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
         <View style={styles.iconBox}>
@@ -270,21 +181,6 @@ export default function SettingsScreen({ navigation }) {
         </View>
       </View>
 
-      <Text style={[styles.sectionTitle, { color: text }]}>Application</Text>
-      <Pressable
-        style={[styles.linkCard, { backgroundColor: surface, borderColor: border }]}
-        onPress={() => navigation.navigate('About')}
-        accessibilityRole="button"
-      >
-        <View style={styles.iconBox}>
-          <Icon name="information-outline" size={23} color={accent} />
-        </View>
-        <View style={styles.cardCopy}>
-          <Text style={[styles.cardTitle, { color: text }]}>About CALABARZON Tour</Text>
-          <Text style={[styles.description, { color: mutedText }]}>Learn about this cultural mapping and virtual tour app.</Text>
-        </View>
-        <Icon name="chevron-right" size={24} color={mutedText} />
-      </Pressable>
     </ScrollView>
   );
 }
@@ -301,38 +197,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   settingLabel: { flex: 1, fontSize: 16, fontWeight: '600' },
-  motionLabelGroup: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
-  infoButton: { padding: 8 },
   musicControls: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   musicSlider: { width: 116, height: 40 },
   volumeValue: { width: 36, fontSize: 12, textAlign: 'right' },
-  tooltipLayer: {
-    flex: 1,
-  },
-  notice: {
-    position: 'absolute',
-    width: 240,
-    padding: 14,
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  tooltipPointer: {
-    position: 'absolute',
-    top: -6,
-    width: 12,
-    height: 12,
-    transform: [{ rotate: '45deg' }],
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-  },
-  noticeText: { fontSize: 14, lineHeight: 20 },
   error: { color: colors.danger, fontSize: 13, lineHeight: 18, marginTop: 8 },
   sectionTitle: {
     fontFamily: fonts.serif,
@@ -345,16 +212,6 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 14,
-    padding: 14,
-  },
-  linkCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
     backgroundColor: '#fff',
     borderWidth: 1,

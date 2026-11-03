@@ -1,15 +1,35 @@
 import React, { useCallback, useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import DestinationCard from '../components/DestinationCard';
 import { getHomeData } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
 
+const FAQ_ITEMS = [
+  {
+    question: 'About this app',
+    answer: 'Gala Tour is a virtual tour and cultural mapping app for CALABARZON. Explore destinations, learn about their history and culture, and test your knowledge with quizzes.',
+  },
+  {
+    question: 'What can I explore in Gala Tour?',
+    answer: 'Discover historical, cultural, religious, nature, and museum destinations across CALABARZON.',
+  },
+  {
+    question: 'Can I take a virtual tour?',
+    answer: 'Yes. Open a destination to view its photos, history, and cultural significance. Some destinations may also include a 360° tour.',
+  },
+  {
+    question: 'How does the quiz and progress tracking work?',
+    answer: 'Take a destination quiz to test your knowledge. Your attempts and completed destinations are saved on this device or browser.',
+  },
+];
+
 export default function HomeScreen({ navigation }) {
   const { surface, text, mutedText, background } = useAppTheme();
   const [home, setHome] = useState({ categoryImages: {}, upNext: [] });
+  const [openFaq, setOpenFaq] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -33,7 +53,7 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.heroContent}>
             <View style={styles.header}>
               <Text style={[styles.title, { color: '#FFFFFF' }]}>
-                Explore <Text style={[styles.titleAccent, { color: '#F6D278' }]}>CALABARZON</Text>
+                Gala <Text style={[styles.titleAccent, { color: '#F6D278' }]}>Tour</Text>
               </Text>
               <Image
                 source={require('../../images/flag.gif')}
@@ -86,20 +106,32 @@ export default function HomeScreen({ navigation }) {
             ))}
           </View>
 
-          <Text style={[styles.heading, { color: text }]}>Up next</Text>
-          {home.upNext.length === 0 ? (
-            <Text style={[styles.empty, { color: mutedText }]}>
-              You have completed every destination. Add a new one from the Destinations tab.
-            </Text>
-          ) : (
-            home.upNext.map((item) => (
-              <DestinationCard
-                key={item.id}
-                item={item}
-                onPress={() => navigation.navigate('DestinationDetail', { id: item.id })}
-              />
-            ))
-          )}
+          <Text style={[styles.heading, { color: text }]}>Frequently asked questions</Text>
+          <View style={styles.faqList}>
+            {FAQ_ITEMS.map((item, index) => {
+              const isOpen = openFaq === index;
+              return (
+                <View
+                  key={item.question}
+                  style={[styles.faqItem, { backgroundColor: surface, borderColor: colors.line }]}
+                >
+                  <Pressable
+                    style={styles.faqQuestion}
+                    onPress={() => setOpenFaq(isOpen ? null : index)}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isOpen }}
+                  >
+                    <Text style={[styles.faqQuestionText, { color: text }]}>{item.question}</Text>
+                    <Icon name={isOpen ? 'minus' : 'plus'} size={22} color={colors.primary} />
+                  </Pressable>
+                  {isOpen ? (
+                    <Text style={[styles.faqAnswer, { color: mutedText }]}>{item.answer}</Text>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+
         </View>
     </ScrollView>
   );
@@ -163,6 +195,23 @@ const styles = StyleSheet.create({
     marginTop: 26,
     marginBottom: 12,
   },
+  faqList: { gap: 10 },
+  faqItem: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+  },
+  faqQuestion: {
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingVertical: 10,
+  },
+  faqQuestionText: { flex: 1, fontSize: 15, fontWeight: '600', lineHeight: 21 },
+  faqAnswer: { fontSize: 14, lineHeight: 21, paddingBottom: 14 },
   grid: { gap: 16 },
   categoryCard: {
     width: '100%',
@@ -198,5 +247,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  empty: { color: colors.muted, fontSize: 15, lineHeight: 22 },
 });

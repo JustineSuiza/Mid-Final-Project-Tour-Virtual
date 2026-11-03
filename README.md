@@ -1,4 +1,4 @@
-# CALABARZON Virtual Tour and Cultural Mapping App (Phase 1 + Phase 2)
+# Gala Tour — CALABARZON Virtual Tour and Cultural Mapping App
 
 React Native (Expo) app with a local SQLite database.
 
@@ -50,7 +50,7 @@ What differs on the web:
 | **P1-1 CRUD** | `DestinationFormScreen` (add/edit), `DestinationDetailScreen` (view/delete), `db/database.js` |
 | **P1-2 Destination information** | Name, description, address, category, and image on the card, detail, and form screens |
 | **P1-3 Search and filter** | `DestinationListScreen`: search box and category chips, run as SQL `LIKE` and `WHERE` queries |
-| **P1-4 Navigation** | Bottom tabs (Destinations, Home, Progress, Settings, About) plus a stack to Detail, Form, Tour, Quiz |
+| **P1-4 Navigation** | Bottom tabs (Destinations, Home, Progress, Settings) plus a stack to Detail, Form, Tour, Quiz |
 | **P1-5 Database** | `expo-sqlite`; tables `destinations`, `quiz_questions`, `progress`, `quiz_attempts` |
 | **P2-1 Virtual tour** | `VirtualTourScreen`: swipeable photos, History, Cultural significance, optional 360° link (`Tour360Screen`) |
 | **P2-2 Quiz** | `QuizScreen`: multiple choice, instant feedback, score computed and shown at the end. `QuizEditorScreen` adds or removes questions |
