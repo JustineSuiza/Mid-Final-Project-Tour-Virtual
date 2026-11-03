@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { FontAwesome6, MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Button from '../components/Button';
 import Field from '../components/Field';
@@ -59,12 +59,10 @@ export default function AccountScreen() {
   const [province, setProvince] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [phone, setPhone] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
+  const [aboutMe, setAboutMe] = useState('');
   const [twitter, setTwitter] = useState('');
-  const [behance, setBehance] = useState('');
+  const [google, setGoogle] = useState('');
   const [facebook, setFacebook] = useState('');
-  const [followers, setFollowers] = useState('0');
-  const [following, setFollowing] = useState('0');
   const [country, setCountry] = useState(PHONE_COUNTRIES[0]);
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState('');
@@ -79,12 +77,10 @@ export default function AccountScreen() {
       setProvince(currentUser.province || '');
       setPostalCode(currentUser.postalCode || '');
       setPhone(currentUser.phone || '');
-      setJobTitle(currentUser.jobTitle || '');
+      setAboutMe(currentUser.aboutMe || currentUser.jobTitle || '');
       setTwitter(currentUser.twitter || '');
-      setBehance(currentUser.behance || '');
+      setGoogle(currentUser.google || '');
       setFacebook(currentUser.facebook || '');
-      setFollowers(String(currentUser.followers ?? 0));
-      setFollowing(String(currentUser.following ?? 0));
       setCountry(currentUser.country || PHONE_COUNTRIES[0]);
       setProfilePhoto(currentUser.profilePhoto || '');
       setEmail(currentUser.email);
@@ -118,12 +114,10 @@ export default function AccountScreen() {
           phone: phone.trim(),
           country,
           profilePhoto,
-          jobTitle: jobTitle.trim(),
+          aboutMe: aboutMe.trim(),
           twitter: twitter.trim(),
-          behance: behance.trim(),
+          google: google.trim(),
           facebook: facebook.trim(),
-          followers: followers.trim(),
-          following: following.trim(),
         });
         setProfileView('preview');
         setNotice('Personal information updated.');
@@ -248,45 +242,23 @@ export default function AccountScreen() {
               ) : (
                 <Text style={styles.bannerNameText}>{name || 'Full name'}</Text>
               )}
+              <Text style={styles.aboutMeLabel}>About myself</Text>
               {isEditingProfile ? (
                 <TextInput
-                  value={jobTitle}
-                  onChangeText={setJobTitle}
-                  placeholder="Add a title"
+                  value={aboutMe}
+                  onChangeText={setAboutMe}
+                  placeholder="Write a little about yourself"
                   placeholderTextColor="rgba(255,255,255,0.7)"
-                  style={styles.bannerJobInput}
-                  accessibilityLabel="Profile title"
+                  multiline
+                  textAlignVertical="top"
+                  style={styles.aboutMeInput}
+                  accessibilityLabel="About myself"
                 />
               ) : (
-                <Text style={styles.bannerJobText}>{jobTitle || 'Add a title'}</Text>
+                <Text style={styles.aboutMeText}>
+                  {aboutMe || 'Write a little about yourself'}
+                </Text>
               )}
-              <View style={styles.profileStats}>
-                <View style={styles.stat}>
-                  {isEditingProfile ? (
-                    <TextInput
-                      value={followers}
-                      onChangeText={(value) => setFollowers(value.replace(/\D/g, ''))}
-                      keyboardType="number-pad"
-                      style={styles.statNumber}
-                      accessibilityLabel="Follower count"
-                    />
-                  ) : <Text style={styles.statNumberText}>{followers}</Text>}
-                  <Text style={styles.statLabel}>Followers</Text>
-                </View>
-                <View style={styles.statDivider} />
-                <View style={styles.stat}>
-                  {isEditingProfile ? (
-                    <TextInput
-                      value={following}
-                      onChangeText={(value) => setFollowing(value.replace(/\D/g, ''))}
-                      keyboardType="number-pad"
-                      style={styles.statNumber}
-                      accessibilityLabel="Following count"
-                    />
-                  ) : <Text style={styles.statNumberText}>{following}</Text>}
-                  <Text style={styles.statLabel}>Following</Text>
-                </View>
-              </View>
             </LinearGradient>
 
             {photoError ? <Text style={styles.fieldError}>{photoError}</Text> : null}
@@ -317,7 +289,7 @@ export default function AccountScreen() {
                 value={streetAddress}
                 onChangeText={setStreetAddress}
                 editable={isEditingProfile}
-                placeholder="Street address"
+                placeholder="e.g. 123 Rizal Street"
                 text={text}
                 mutedText={mutedText}
                 border={border}
@@ -328,7 +300,7 @@ export default function AccountScreen() {
                 value={city}
                 onChangeText={setCity}
                 editable={isEditingProfile}
-                placeholder="City"
+                placeholder="e.g. Calamba"
                 text={text}
                 mutedText={mutedText}
                 border={border}
@@ -339,7 +311,7 @@ export default function AccountScreen() {
                 value={province}
                 onChangeText={setProvince}
                 editable={isEditingProfile}
-                placeholder="Province"
+                placeholder="e.g. Laguna"
                 text={text}
                 mutedText={mutedText}
                 border={border}
@@ -350,7 +322,7 @@ export default function AccountScreen() {
                 value={postalCode}
                 onChangeText={setPostalCode}
                 editable={isEditingProfile}
-                placeholder="Postal code"
+                placeholder="e.g. 4027"
                 text={text}
                 mutedText={mutedText}
                 border={border}
@@ -364,40 +336,42 @@ export default function AccountScreen() {
                 keyboardType="phone-pad"
                 prefix={<CountryFlag key={country.flagCode} country={country} fallback={PHONE_COUNTRIES[0]} style={styles.rowFlag} />}
                 prefixText={country.code}
-                placeholder="Phone number"
+                placeholder="e.g. 912 345 6789"
                 text={text}
                 mutedText={mutedText}
                 border={border}
               />
               <ProfileRow
-                icon="twitter"
-                label="Twitter"
+                icon="x-twitter"
+                IconComponent={FontAwesome6}
+                label="X (optional)"
                 value={twitter}
                 onChangeText={setTwitter}
                 editable={isEditingProfile}
-                placeholder="@username"
+                placeholder="@juantravels"
                 text={text}
                 mutedText={mutedText}
                 border={border}
               />
               <ProfileRow
-                icon="palette-outline"
-                label="Behance"
-                value={behance}
-                onChangeText={setBehance}
+                icon="google"
+                IconComponent={FontAwesome6}
+                label="Google (optional)"
+                value={google}
+                onChangeText={setGoogle}
                 editable={isEditingProfile}
-                placeholder="Behance profile"
+                placeholder="e.g. google.com/username"
                 text={text}
                 mutedText={mutedText}
                 border={border}
               />
               <ProfileRow
                 icon="facebook"
-                label="Facebook"
+                label="Facebook (optional)"
                 value={facebook}
                 onChangeText={setFacebook}
                 editable={isEditingProfile}
-                placeholder="Facebook profile"
+                placeholder="e.g. facebook.com/username"
                 text={text}
                 mutedText={mutedText}
                 border={border}
@@ -582,6 +556,7 @@ function AccountLink({ label, onPress, color, style }) {
 
 function ProfileRow({
   icon,
+  IconComponent = Icon,
   label,
   value,
   onChangeText,
@@ -598,7 +573,7 @@ function ProfileRow({
 }) {
   const content = (
     <>
-      <Icon name={icon} size={19} color={mutedText} />
+      <IconComponent name={icon} size={19} color={mutedText} />
       <View style={[styles.profileRowContent, !last && { borderBottomColor: border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
         <Text style={[styles.profileRowLabel, { color: mutedText }]}>{label}</Text>
         <View style={styles.profileRowValue}>
@@ -723,26 +698,24 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   bannerNameText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', textAlign: 'center', marginTop: 6 },
-  bannerJobInput: {
+  aboutMeLabel: { color: '#FFFFFF', fontSize: 13, fontWeight: '600', marginTop: 8 },
+  aboutMeInput: {
+    width: '100%',
+    minHeight: 64,
     color: '#FFFFFF',
     fontSize: 13,
+    lineHeight: 19,
     textAlign: 'center',
-    minWidth: 160,
-    marginTop: 2,
+    marginTop: 4,
   },
-  bannerJobText: { color: 'rgba(255,255,255,0.82)', fontSize: 13, textAlign: 'center', marginTop: 2 },
-  profileStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '78%',
-    marginTop: 12,
+  aboutMeText: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginTop: 4,
+    paddingHorizontal: 8,
   },
-  stat: { flex: 1, alignItems: 'center' },
-  statNumber: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', minWidth: 60, textAlign: 'center', padding: 0 },
-  statNumberText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', minWidth: 60, textAlign: 'center' },
-  statLabel: { color: 'rgba(255,255,255,0.82)', fontSize: 12, marginTop: 2 },
-  statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.35)' },
   profileDetails: {
     width: '100%',
     paddingHorizontal: 8,

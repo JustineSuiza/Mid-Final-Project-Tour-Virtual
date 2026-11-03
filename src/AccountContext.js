@@ -6,7 +6,7 @@ const ACCOUNTS_KEY = 'gala-tour-local-accounts-v1';
 const SESSION_KEY = 'gala-tour-local-session-v1';
 const DEFAULT_PROFILE = {
   name: '',
-  jobTitle: '',
+  aboutMe: '',
   streetAddress: '',
   city: '',
   province: '',
@@ -15,10 +15,8 @@ const DEFAULT_PROFILE = {
   country: { name: 'Philippines', flag: '🇵🇭', flagCode: 'ph', code: '+63' },
   profilePhoto: '',
   twitter: '',
-  behance: '',
+  google: '',
   facebook: '',
-  followers: '0',
-  following: '0',
 };
 
 export function AccountProvider({ children }) {
