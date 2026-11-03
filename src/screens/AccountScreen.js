@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { SvgUri } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import Button from '../components/Button';
 import Field from '../components/Field';
 import { useAppTheme } from '../ThemeContext';
 import { fonts } from '../theme';
 import { pickPhotos } from '../utils/photos';
 import { useAccount } from '../AccountContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PHONE_COUNTRIES = [
   { name: 'Philippines', flag: '🇵🇭', flagCode: 'ph', code: '+63' },
@@ -38,21 +39,32 @@ const PHONE_COUNTRIES = [
 
 const MODES = {
   signIn: 'Sign in',
-  register: 'Create account',
-  forgotPassword: 'Reset password',
   profile: 'Personal information',
 };
 
 export default function AccountScreen() {
+  const insets = useSafeAreaInsets();
   const { background, surface, text, mutedText, border, accent } = useAppTheme();
-  const { currentUser, loading, storageError, register, login, saveProfile, logout } = useAccount();
+  const { currentUser, loading, storageError, login, saveProfile, logout } = useAccount();
   const [mode, setMode] = useState('signIn');
+  const [profileView, setProfileView] = useState('preview');
+  const [profileMenuVisible, setProfileMenuVisible] = useState(false);
   const [notice, setNotice] = useState('');
+  const [warningMessage, setWarningMessage] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [province, setProvince] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [phone, setPhone] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const [twitter, setTwitter] = useState('');
+  const [behance, setBehance] = useState('');
+  const [facebook, setFacebook] = useState('');
+  const [followers, setFollowers] = useState('0');
+  const [following, setFollowing] = useState('0');
   const [country, setCountry] = useState(PHONE_COUNTRIES[0]);
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState('');
@@ -62,75 +74,78 @@ export default function AccountScreen() {
     if (loading) return;
     if (currentUser) {
       setName(currentUser.name || '');
+      setStreetAddress(currentUser.streetAddress || '');
+      setCity(currentUser.city || '');
+      setProvince(currentUser.province || '');
+      setPostalCode(currentUser.postalCode || '');
       setPhone(currentUser.phone || '');
+      setJobTitle(currentUser.jobTitle || '');
+      setTwitter(currentUser.twitter || '');
+      setBehance(currentUser.behance || '');
+      setFacebook(currentUser.facebook || '');
+      setFollowers(String(currentUser.followers ?? 0));
+      setFollowing(String(currentUser.following ?? 0));
       setCountry(currentUser.country || PHONE_COUNTRIES[0]);
       setProfilePhoto(currentUser.profilePhoto || '');
       setEmail(currentUser.email);
       setMode('profile');
+      setProfileView('preview');
     } else {
       setMode('signIn');
     }
   }, [currentUser, loading]);
 
-  const changeMode = (nextMode) => {
-    setMode(nextMode);
-    setNotice('');
-  };
-
   const submit = async () => {
     setNotice('');
-    if (mode === 'forgotPassword') {
-      setNotice('Password reset is unavailable in local demo mode because no email service is connected.');
-      return;
-    }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setNotice('Enter a valid email address.');
       return;
     }
     if (mode === 'profile') {
-      if (!name.trim()) {
-        setNotice('Enter your full name.');
-        return;
-      }
-      if (!phone.trim()) {
-        setNotice('Enter your phone/mobile number.');
+      const hasMissingFields = [name, streetAddress, city, province, postalCode, phone]
+        .some((value) => !value.trim());
+      if (hasMissingFields) {
+        setWarningMessage('Please complete all required fields.');
         return;
       }
       try {
         await saveProfile({
           name: name.trim(),
+          streetAddress: streetAddress.trim(),
+          city: city.trim(),
+          province: province.trim(),
+          postalCode: postalCode.trim(),
           phone: phone.trim(),
           country,
           profilePhoto,
+          jobTitle: jobTitle.trim(),
+          twitter: twitter.trim(),
+          behance: behance.trim(),
+          facebook: facebook.trim(),
+          followers: followers.trim(),
+          following: following.trim(),
         });
-        setNotice('Personal information saved on this device.');
+        setProfileView('preview');
+        setNotice('Personal information updated.');
       } catch (error) {
         setNotice(error.message || 'Could not save your profile.');
       }
       return;
     }
-    if (password.length < 8) {
-      setNotice('Password must contain at least 8 characters.');
+    if (!password) {
+      setNotice('Enter a password to continue.');
       return;
     }
     try {
-      if (mode === 'register') {
-        if (password !== confirmPassword) {
-          setNotice('The passwords do not match.');
-          return;
-        }
-        await register({ email, password });
-        setMode('profile');
-        setNotice('Account created on this device. Complete your personal information below.');
-      } else {
-        await login({ email, password });
-        setMode('profile');
-        setNotice('');
-      }
+      await login({ email });
+      setMode('profile');
+      setNotice('Signed in to your local demo account.');
     } catch (error) {
       setNotice(error.message || 'Could not complete the account request.');
     }
   };
+
+  const isEditingProfile = profileView === 'edit';
 
   const chooseProfilePhoto = async () => {
     setPhotoError('');
@@ -145,7 +160,11 @@ export default function AccountScreen() {
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: background }]}
-      contentContainerStyle={[styles.content, mode === 'profile' && styles.profileContent]}
+      contentContainerStyle={[
+        styles.content,
+        mode === 'profile' && styles.profileContent,
+        { paddingTop: mode === 'profile' ? insets.top : Math.max(insets.top, 40) },
+      ]}
       keyboardShouldPersistTaps="handled"
     >
       {mode !== 'profile' ? (
@@ -153,20 +172,18 @@ export default function AccountScreen() {
           <Icon name="account-outline" size={38} color="#FFFFFF" />
         </View>
       ) : null}
-      <Text style={[styles.title, mode === 'profile' && styles.profileTitle, { color: text }]}>
-        {loading ? 'Loading account…' : MODES[mode]}
-      </Text>
-      <Text style={[styles.subtitle, mode === 'profile' && styles.profileSubtitle, { color: mutedText }]}>
-        {loading
-          ? 'Checking local account information.'
-          : mode === 'signIn'
-          ? 'Sign in to your Gala Tour account.'
-          : mode === 'register'
-          ? 'Demo account only: credentials are stored on this device and do not sync.'
-          : mode === 'profile'
-          ? 'Review your profile details.'
-          : 'Enter your email to reset your password.'}
-      </Text>
+      {mode !== 'profile' ? (
+        <>
+          <Text style={[styles.title, { color: text }]}>
+            {loading ? 'Loading account…' : MODES[mode]}
+          </Text>
+          <Text style={[styles.subtitle, { color: mutedText }]}>
+            {loading
+              ? 'Checking local account information.'
+              : 'Demo sign-in: enter an email and any password to continue.'}
+          </Text>
+        </>
+      ) : null}
 
       {storageError ? <Text style={styles.error}>{storageError}</Text> : null}
       {!loading && (
@@ -177,61 +194,214 @@ export default function AccountScreen() {
       ]}>
         {mode === 'profile' ? (
           <>
-            <View style={[styles.profileHeader, { borderBottomColor: border }]}>
-              {profilePhoto ? (
-                <Image source={{ uri: profilePhoto }} style={styles.profilePhoto} />
-              ) : (
-                <View style={[styles.profilePhoto, styles.photoPlaceholder, { backgroundColor: surface, borderColor: border }]}>
-                  <Icon name="account" size={40} color={mutedText} />
-                </View>
-              )}
-              <View style={styles.profileIdentity}>
-                <Text style={[styles.profileName, { color: text }]}>{name || 'Your profile'}</Text>
-                <Text style={[styles.accountEmail, { color: mutedText }]}>{currentUser?.email}</Text>
-                <AccountLink
-                  label={profilePhoto ? 'Change photo' : 'Add profile photo'}
-                  onPress={chooseProfilePhoto}
-                  color={accent}
-                />
-              </View>
-            </View>
-            {photoError ? <Text style={styles.fieldError}>{photoError}</Text> : null}
-            <Text style={[styles.sectionLabel, { color: mutedText }]}>PROFILE DETAILS</Text>
-            <Field
-              label="Full name"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-              textContentType="name"
-              placeholder="Your full name"
-            />
-            <Text style={[styles.fieldLabel, { color: text }]}>Country of residence</Text>
-            <Pressable
-              style={[styles.countryButton, { backgroundColor: surface, borderColor: border }]}
-              onPress={() => setCountryPickerVisible(true)}
-              accessibilityRole="button"
-              accessibilityLabel={`Choose country of residence. Current country: ${country.name}`}
+            <LinearGradient
+              colors={['#302CF4', '#6768F5', '#9381ED']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.profileBanner}
             >
-              <CountryFlag key={country.flagCode} country={country} fallback={PHONE_COUNTRIES[0]} />
-              <Text style={[styles.countryName, { color: text }]}>{country.name}</Text>
-              <Icon name="chevron-down" size={22} color={mutedText} />
-            </Pressable>
-            <View style={styles.phoneLabelRow}>
-              <Text style={[styles.fieldLabel, { color: text }]}>Phone/mobile number</Text>
-            </View>
-            <View style={[styles.phoneInput, { backgroundColor: surface, borderColor: border }]}>
-              <View style={[styles.phoneCode, { borderRightColor: border }]}>
-                <CountryFlag key={country.flagCode} country={country} fallback={PHONE_COUNTRIES[0]} style={styles.phoneFlag} />
-                <Text style={[styles.dialCodeLabel, { color: text }]}>{country.code}</Text>
+              <View style={styles.bannerTop}>
+                <Text style={styles.bannerTitle}>Personal Information</Text>
+                <Pressable
+                  onPress={() => setProfileMenuVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Profile options"
+                  hitSlop={10}
+                >
+                  <Icon name="account-cog-outline" size={20} color="#FFFFFF" />
+                </Pressable>
               </View>
-              <TextInput
+              <Pressable
+                onPress={isEditingProfile ? chooseProfilePhoto : undefined}
+                disabled={!isEditingProfile}
+                accessibilityRole="button"
+                accessibilityLabel="Choose profile picture"
+                style={styles.avatarButton}
+              >
+                {profilePhoto ? (
+                  <Image source={{ uri: profilePhoto }} style={styles.profilePhoto} />
+                ) : (
+                  <View style={styles.photoPlaceholder}>
+                    <Icon name="account" size={40} color="#6B72DF" />
+                  </View>
+                )}
+              </Pressable>
+              {isEditingProfile ? (
+                <AccountLink
+                  label={profilePhoto ? 'Change profile photo' : 'Add profile photo'}
+                  onPress={chooseProfilePhoto}
+                  color="#FFFFFF"
+                  style={styles.bannerPhotoLink}
+                />
+              ) : null}
+              {isEditingProfile ? (
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Full name"
+                  placeholderTextColor="rgba(255,255,255,0.75)"
+                  autoCapitalize="words"
+                  textContentType="name"
+                  style={styles.bannerNameInput}
+                  accessibilityLabel="Full name"
+                />
+              ) : (
+                <Text style={styles.bannerNameText}>{name || 'Full name'}</Text>
+              )}
+              {isEditingProfile ? (
+                <TextInput
+                  value={jobTitle}
+                  onChangeText={setJobTitle}
+                  placeholder="Add a title"
+                  placeholderTextColor="rgba(255,255,255,0.7)"
+                  style={styles.bannerJobInput}
+                  accessibilityLabel="Profile title"
+                />
+              ) : (
+                <Text style={styles.bannerJobText}>{jobTitle || 'Add a title'}</Text>
+              )}
+              <View style={styles.profileStats}>
+                <View style={styles.stat}>
+                  {isEditingProfile ? (
+                    <TextInput
+                      value={followers}
+                      onChangeText={(value) => setFollowers(value.replace(/\D/g, ''))}
+                      keyboardType="number-pad"
+                      style={styles.statNumber}
+                      accessibilityLabel="Follower count"
+                    />
+                  ) : <Text style={styles.statNumberText}>{followers}</Text>}
+                  <Text style={styles.statLabel}>Followers</Text>
+                </View>
+                <View style={styles.statDivider} />
+                <View style={styles.stat}>
+                  {isEditingProfile ? (
+                    <TextInput
+                      value={following}
+                      onChangeText={(value) => setFollowing(value.replace(/\D/g, ''))}
+                      keyboardType="number-pad"
+                      style={styles.statNumber}
+                      accessibilityLabel="Following count"
+                    />
+                  ) : <Text style={styles.statNumberText}>{following}</Text>}
+                  <Text style={styles.statLabel}>Following</Text>
+                </View>
+              </View>
+            </LinearGradient>
+
+            {photoError ? <Text style={styles.fieldError}>{photoError}</Text> : null}
+            <View style={styles.profileDetails}>
+              <ProfileRow
+                icon="email-outline"
+                label="Email"
+                value={currentUser?.email || ''}
+                editable={false}
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="map-marker-outline"
+                label="Country"
+                value={country.name}
+                editable={false}
+                flag={<CountryFlag key={country.flagCode} country={country} fallback={PHONE_COUNTRIES[0]} style={styles.rowFlag} />}
+                onPress={isEditingProfile ? () => setCountryPickerVisible(true) : undefined}
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="home-city-outline"
+                label="Street address"
+                value={streetAddress}
+                onChangeText={setStreetAddress}
+                editable={isEditingProfile}
+                placeholder="Street address"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="city-variant-outline"
+                label="City"
+                value={city}
+                onChangeText={setCity}
+                editable={isEditingProfile}
+                placeholder="City"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="map-outline"
+                label="Province"
+                value={province}
+                onChangeText={setProvince}
+                editable={isEditingProfile}
+                placeholder="Province"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="mailbox-outline"
+                label="Postal code"
+                value={postalCode}
+                onChangeText={setPostalCode}
+                editable={isEditingProfile}
+                placeholder="Postal code"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="cellphone"
+                label="Mobile"
                 value={phone}
                 onChangeText={setPhone}
+                editable={isEditingProfile}
                 keyboardType="phone-pad"
-                textContentType="telephoneNumber"
-                placeholder="Enter your number"
-                placeholderTextColor="#8A979C"
-                style={[styles.phoneTextInput, { color: text }]}
+                prefix={<CountryFlag key={country.flagCode} country={country} fallback={PHONE_COUNTRIES[0]} style={styles.rowFlag} />}
+                prefixText={country.code}
+                placeholder="Phone number"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="twitter"
+                label="Twitter"
+                value={twitter}
+                onChangeText={setTwitter}
+                editable={isEditingProfile}
+                placeholder="@username"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="palette-outline"
+                label="Behance"
+                value={behance}
+                onChangeText={setBehance}
+                editable={isEditingProfile}
+                placeholder="Behance profile"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="facebook"
+                label="Facebook"
+                value={facebook}
+                onChangeText={setFacebook}
+                editable={isEditingProfile}
+                placeholder="Facebook profile"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+                last
               />
             </View>
           </>
@@ -247,88 +417,53 @@ export default function AccountScreen() {
             placeholder="you@example.com"
           />
         ) : null}
-        {mode !== 'forgotPassword' && mode !== 'profile' ? (
+        {mode !== 'profile' ? (
           <Field
             label="Password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            textContentType={mode === 'register' ? 'newPassword' : 'password'}
-            placeholder="Enter your password"
-          />
-        ) : null}
-        {mode === 'register' ? (
-          <Field
-            label="Confirm password"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            textContentType="newPassword"
-            placeholder="Re-enter your password"
+            textContentType="password"
+            placeholder="Enter any password"
           />
         ) : null}
 
-        <Button
-          label={mode === 'signIn'
-            ? 'Sign in'
-            : mode === 'register'
-            ? 'Create account'
-            : mode === 'profile'
-            ? 'Save profile'
-            : 'Send reset link'}
-          icon={mode === 'forgotPassword' ? 'email-outline' : mode === 'profile' ? 'content-save-outline' : 'login'}
+        {mode !== 'profile' ? <Button
+          label="Sign in"
+          icon="login"
           onPress={submit}
           style={styles.submitButton}
-        />
-        {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-
-        {mode === 'signIn' ? (
+        /> : null}
+        {mode === 'profile' && isEditingProfile ? (
           <AccountLink
-            label="Forgot password?"
-            onPress={() => changeMode('forgotPassword')}
+            label="Update"
+            onPress={submit}
             color={accent}
+            style={styles.saveChangesLink}
           />
         ) : null}
+        {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+
       </View>
       )}
 
-      {!loading && <View style={styles.modeSwitch}>
-        <Text style={[styles.modePrompt, { color: mutedText }]}>
-          {mode === 'profile'
-            ? 'Finished viewing your profile?'
-            : mode === 'register'
-            ? 'Already have an account?'
-            : 'New to Gala Tour?'}
-        </Text>
+      {!loading && mode === 'profile' ? <View style={styles.modeSwitch}>
         <AccountLink
-          label={mode === 'profile' ? 'Sign out' : mode === 'register' ? 'Sign in' : 'Register'}
+          label="Sign out"
           onPress={async () => {
-            if (mode === 'profile') {
-              try {
-                await logout();
-                setName('');
-                setPhone('');
-                setProfilePhoto('');
-                setPassword('');
-                setConfirmPassword('');
-              } catch (error) {
-                setNotice(error.message || 'Could not sign out.');
-              }
-            } else {
-              changeMode(mode === 'register' ? 'signIn' : 'register');
+            try {
+              await logout();
+              setName('');
+              setPhone('');
+              setProfilePhoto('');
+              setPassword('');
+            } catch (error) {
+              setNotice(error.message || 'Could not sign out.');
             }
           }}
           color={accent}
         />
-      </View>}
-      {!loading && mode === 'forgotPassword' ? (
-        <AccountLink
-          label="Back to sign in"
-          onPress={() => changeMode('signIn')}
-          color={accent}
-          style={styles.backLink}
-        />
-      ) : null}
+      </View> : null}
       <Modal
         visible={countryPickerVisible}
         transparent
@@ -365,6 +500,74 @@ export default function AccountScreen() {
           </View>
         </View>
       </Modal>
+      <Modal
+        visible={profileMenuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setProfileMenuVisible(false)}
+      >
+        <View style={styles.profileMenuOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setProfileMenuVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close profile options"
+          />
+          <View style={[styles.profileMenu, { backgroundColor: surface, borderColor: border }]}>
+            <Pressable
+              style={styles.profileMenuItem}
+              onPress={() => {
+                setProfileView('edit');
+                setNotice('');
+                setProfileMenuVisible(false);
+              }}
+              accessibilityRole="button"
+            >
+              <Icon name="pencil-outline" size={20} color={accent} />
+              <Text style={[styles.profileMenuText, { color: text }]}>Edit</Text>
+            </Pressable>
+            <View style={[styles.profileMenuDivider, { backgroundColor: border }]} />
+            <Pressable
+              style={styles.profileMenuItem}
+              onPress={() => {
+                setProfileView('preview');
+                setProfileMenuVisible(false);
+              }}
+              accessibilityRole="button"
+            >
+              <Icon name="eye-outline" size={20} color={accent} />
+              <Text style={[styles.profileMenuText, { color: text }]}>Preview</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={!!warningMessage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setWarningMessage('')}
+      >
+        <View style={styles.warningOverlay}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setWarningMessage('')}
+            accessibilityRole="button"
+            accessibilityLabel="Close warning"
+          />
+          <View style={[styles.warningPopover, { backgroundColor: surface, borderColor: border }]}>
+            <Icon name="alert-circle-outline" size={20} color="#B45309" />
+            <Text style={[styles.warningMessage, { color: mutedText }]}>{warningMessage}</Text>
+            <Pressable
+              onPress={() => setWarningMessage('')}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss warning"
+              hitSlop={8}
+            >
+              <Icon name="close" size={18} color={mutedText} />
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -377,6 +580,64 @@ function AccountLink({ label, onPress, color, style }) {
   );
 }
 
+function ProfileRow({
+  icon,
+  label,
+  value,
+  onChangeText,
+  onPress,
+  editable = true,
+  keyboardType,
+  placeholder,
+  prefix,
+  prefixText,
+  text,
+  mutedText,
+  border,
+  last = false,
+}) {
+  const content = (
+    <>
+      <Icon name={icon} size={19} color={mutedText} />
+      <View style={[styles.profileRowContent, !last && { borderBottomColor: border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+        <Text style={[styles.profileRowLabel, { color: mutedText }]}>{label}</Text>
+        <View style={styles.profileRowValue}>
+          {prefix}
+          {prefixText ? <Text style={[styles.profileRowPrefixText, { color: text }]}>{prefixText}</Text> : null}
+          {editable ? (
+            <TextInput
+              value={value}
+              onChangeText={onChangeText}
+              keyboardType={keyboardType}
+              placeholder={placeholder}
+              placeholderTextColor="#8A979C"
+              style={[styles.profileRowInput, { color: text }]}
+              accessibilityLabel={label}
+            />
+          ) : (
+            <Text style={[styles.profileRowText, { color: text }]} numberOfLines={1}>{value}</Text>
+          )}
+          {onPress ? <Icon name="chevron-right" size={20} color={mutedText} /> : null}
+        </View>
+      </View>
+    </>
+  );
+
+  if (onPress) {
+    return (
+      <Pressable
+        style={styles.profileRow}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${value}. Change`}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+  return <View style={styles.profileRow}>{content}</View>;
+}
+
 function CountryFlag({ country, fallback, style }) {
   const [failed, setFailed] = useState(false);
   const countryCode = country.flagCode
@@ -387,9 +648,10 @@ function CountryFlag({ country, fallback, style }) {
     return <Text style={[styles.countryFlagFallback, style]}>{country.flag || fallback.flag}</Text>;
   }
   return (
-    <SvgUri
-      uri={`https://hatscripts.github.io/circle-flags/flags/${countryCode}.svg`}
+    <Image
+      source={{ uri: `https://flagcdn.com/w80/${countryCode}.png` }}
       style={[styles.countryFlagImage, style]}
+      resizeMode="cover"
       onError={() => setFailed(true)}
       accessibilityLabel={`${country.name} flag`}
     />
@@ -399,9 +661,7 @@ function CountryFlag({ country, fallback, style }) {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { flexGrow: 1, alignItems: 'center', padding: 20, paddingTop: 40, paddingBottom: 36 },
-  profileContent: { alignItems: 'stretch', paddingTop: 24 },
-  profileTitle: { width: '100%', maxWidth: 520, alignSelf: 'center', textAlign: 'left', fontSize: 26 },
-  profileSubtitle: { width: '100%', maxWidth: 520, alignSelf: 'center', textAlign: 'left', marginBottom: 16 },
+  profileContent: { alignItems: 'stretch', paddingTop: 0 },
   iconCircle: {
     width: 72,
     height: 72,
@@ -421,25 +681,81 @@ const styles = StyleSheet.create({
   },
   profileForm: {
     width: '100%',
-    maxWidth: 520,
-    alignSelf: 'center',
+    maxWidth: '100%',
+    alignSelf: 'stretch',
     borderWidth: 0,
     borderRadius: 0,
     padding: 0,
   },
-  profileHeader: {
+  profileBanner: {
+    minHeight: 290,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 18,
+    marginHorizontal: -20,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  bannerTop: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  bannerTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  avatarButton: { marginTop: 18 },
+  profilePhoto: { width: 78, height: 78, borderRadius: 39, borderWidth: 2, borderColor: '#FFFFFF' },
+  photoPlaceholder: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  bannerPhotoLink: { marginTop: 5 },
+  bannerNameInput: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    minWidth: 160,
+    marginTop: 6,
+  },
+  bannerNameText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', textAlign: 'center', marginTop: 6 },
+  bannerJobInput: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    textAlign: 'center',
+    minWidth: 160,
+    marginTop: 2,
+  },
+  bannerJobText: { color: 'rgba(255,255,255,0.82)', fontSize: 13, textAlign: 'center', marginTop: 2 },
+  profileStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: 20,
-    marginBottom: 18,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    width: '78%',
+    marginTop: 12,
   },
-  profilePhoto: { width: 84, height: 84, borderRadius: 42, marginRight: 16 },
-  profileIdentity: { flex: 1, alignItems: 'flex-start', gap: 5 },
-  profileName: { fontSize: 19, fontWeight: '700' },
-  accountEmail: { fontSize: 14 },
-  photoPlaceholder: { alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  sectionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 1, marginBottom: 14 },
+  stat: { flex: 1, alignItems: 'center' },
+  statNumber: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', minWidth: 60, textAlign: 'center', padding: 0 },
+  statNumberText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700', minWidth: 60, textAlign: 'center' },
+  statLabel: { color: 'rgba(255,255,255,0.82)', fontSize: 12, marginTop: 2 },
+  statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.35)' },
+  profileDetails: {
+    width: '100%',
+    paddingHorizontal: 8,
+    marginBottom: 20,
+  },
+  profileRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  profileRowContent: { flex: 1, minHeight: 62, justifyContent: 'center', paddingVertical: 9, gap: 3 },
+  profileRowLabel: { fontSize: 12 },
+  profileRowValue: { minHeight: 24, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  profileRowText: { flex: 1, fontSize: 14 },
+  profileRowInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 2 },
+  profileRowPrefixText: { fontSize: 14, fontWeight: '600' },
+  rowFlag: { width: 26, height: 26, borderRadius: 13, marginRight: 0 },
   fieldError: { color: '#A8432F', fontSize: 13, lineHeight: 18, marginTop: 8, textAlign: 'center' },
   fieldLabel: { fontSize: 14, fontWeight: '600', marginBottom: 6 },
   countryButton: {
@@ -501,6 +817,47 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 8,
   },
+  warningOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    backgroundColor: 'rgba(0,0,0,0.12)',
+  },
+  warningPopover: {
+    width: '100%',
+    maxWidth: 380,
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  profileMenuOverlay: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
+    alignItems: 'flex-end',
+    justifyContent: 'flex-start',
+    paddingTop: 56,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+  },
+  profileMenu: {
+    width: 180,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 4,
+  },
+  profileMenuItem: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
+  profileMenuText: { fontSize: 15, fontWeight: '600' },
+  profileMenuDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 12 },
+  warningMessage: { flex: 1, fontSize: 14, lineHeight: 20 },
   countryModalTitle: { fontFamily: fonts.serif, fontSize: 20, fontWeight: '700', marginBottom: 8 },
   countryList: { flexGrow: 0 },
   countryOption: {
@@ -511,9 +868,9 @@ const styles = StyleSheet.create({
   },
   countryCode: { fontSize: 14, marginLeft: 8 },
   submitButton: { marginTop: 4 },
+  saveChangesLink: { alignSelf: 'flex-end', paddingVertical: 12, paddingHorizontal: 4 },
   notice: { fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 12 },
-  modeSwitch: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 20 },
-  modePrompt: { fontSize: 14 },
+  modeSwitch: { width: '100%', alignItems: 'flex-end', marginTop: 20, marginBottom: 24 },
   link: { fontSize: 14, fontWeight: '700' },
   backLink: { marginTop: 18 },
 });

@@ -1,22 +1,25 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Crypto from 'expo-crypto';
-import { pbkdf2Async } from '@noble/hashes/pbkdf2';
-import { sha256 } from '@noble/hashes/sha256';
-import { bytesToHex } from '@noble/hashes/utils';
 
 const AccountContext = createContext(null);
 const ACCOUNTS_KEY = 'gala-tour-local-accounts-v1';
 const SESSION_KEY = 'gala-tour-local-session-v1';
-const PASSWORD_HASH_ITERATIONS = 310_000;
-
-async function hashPassword(password, salt) {
-  const hash = await pbkdf2Async(sha256, password, salt, {
-    c: PASSWORD_HASH_ITERATIONS,
-    dkLen: 32,
-  });
-  return bytesToHex(hash);
-}
+const DEFAULT_PROFILE = {
+  name: '',
+  jobTitle: '',
+  streetAddress: '',
+  city: '',
+  province: '',
+  postalCode: '',
+  phone: '',
+  country: { name: 'Philippines', flag: '🇵🇭', flagCode: 'ph', code: '+63' },
+  profilePhoto: '',
+  twitter: '',
+  behance: '',
+  facebook: '',
+  followers: '0',
+  following: '0',
+};
 
 export function AccountProvider({ children }) {
   const [accounts, setAccounts] = useState({});
@@ -37,7 +40,7 @@ export function AccountProvider({ children }) {
       }
       setAccounts(parsedAccounts);
       setCurrentUser(savedEmail && parsedAccounts[savedEmail]?.profile
-        ? { email: savedEmail, ...parsedAccounts[savedEmail].profile }
+        ? { email: savedEmail, ...DEFAULT_PROFILE, ...parsedAccounts[savedEmail].profile }
         : null);
     }).catch((error) => {
       if (active) setStorageError(`Could not load local account data: ${error.message || error}`);
@@ -47,40 +50,21 @@ export function AccountProvider({ children }) {
     return () => { active = false; };
   }, []);
 
-  const register = useCallback(async ({ email, password }) => {
+  const login = useCallback(async ({ email }) => {
     const normalizedEmail = email.trim().toLowerCase();
-    if (accounts[normalizedEmail]) throw new Error('An account with this email already exists on this device.');
+    let account = accounts[normalizedEmail];
 
-    const salt = await Crypto.getRandomBytesAsync(16);
-    const record = {
-      salt: bytesToHex(salt),
-      passwordHash: await hashPassword(password, salt),
-      profile: {
-        name: '',
-        phone: '',
-        country: { name: 'Philippines', flag: '🇵🇭', code: '+63' },
-        profilePhoto: '',
-      },
-    };
-    const nextAccounts = { ...accounts, [normalizedEmail]: record };
-    await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(nextAccounts));
-    await AsyncStorage.setItem(SESSION_KEY, normalizedEmail);
-    setAccounts(nextAccounts);
-    setCurrentUser({ email: normalizedEmail, ...record.profile });
-    setStorageError('');
-  }, [accounts]);
-
-  const login = useCallback(async ({ email, password }) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const account = accounts[normalizedEmail];
-    if (!account) throw new Error('No local account was found for this email.');
-
-    const salt = Uint8Array.from(account.salt.match(/.{2}/g).map((byte) => parseInt(byte, 16)));
-    const candidateHash = await hashPassword(password, salt);
-    if (candidateHash !== account.passwordHash) throw new Error('The password is incorrect.');
+    if (!account) {
+      account = { profile: { ...DEFAULT_PROFILE } };
+      const nextAccounts = { ...accounts, [normalizedEmail]: account };
+      await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(nextAccounts));
+      setAccounts(nextAccounts);
+    } else {
+      account = { ...account, profile: { ...DEFAULT_PROFILE, ...account.profile } };
+    }
 
     await AsyncStorage.setItem(SESSION_KEY, normalizedEmail);
-    setCurrentUser({ email: normalizedEmail, ...account.profile });
+    setCurrentUser({ email: normalizedEmail, ...DEFAULT_PROFILE, ...account.profile });
     setStorageError('');
   }, [accounts]);
 
@@ -89,7 +73,7 @@ export function AccountProvider({ children }) {
     const account = accounts[currentUser.email];
     if (!account) throw new Error('The local account could not be found.');
 
-    const nextAccount = { ...account, profile: { ...account.profile, ...profile } };
+    const nextAccount = { ...account, profile: { ...DEFAULT_PROFILE, ...account.profile, ...profile } };
     const nextAccounts = { ...accounts, [currentUser.email]: nextAccount };
     await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(nextAccounts));
     setAccounts(nextAccounts);
@@ -108,11 +92,10 @@ export function AccountProvider({ children }) {
     currentUser,
     loading,
     storageError,
-    register,
     login,
     saveProfile,
     logout,
-  }), [accounts, currentUser, loading, storageError, register, login, saveProfile, logout]);
+  }), [accounts, currentUser, loading, storageError, login, saveProfile, logout]);
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
 }

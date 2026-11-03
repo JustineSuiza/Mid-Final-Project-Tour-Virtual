@@ -3,6 +3,7 @@ import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from '
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getHomeData } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
@@ -27,6 +28,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function HomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { surface, text, mutedText, background } = useAppTheme();
   const [home, setHome] = useState({ categoryImages: {}, upNext: [] });
   const [openFaq, setOpenFaq] = useState(null);
@@ -40,7 +42,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <ScrollView
       style={[styles.scroll, { backgroundColor: background }]}
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+      contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 20, paddingBottom: 20 }}
     >
       <View style={[styles.content, { flex: 1 }]}>
         <ImageBackground
