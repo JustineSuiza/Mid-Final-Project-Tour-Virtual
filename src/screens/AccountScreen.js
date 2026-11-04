@@ -58,6 +58,7 @@ export default function AccountScreen() {
   const [city, setCity] = useState('');
   const [province, setProvince] = useState('');
   const [postalCode, setPostalCode] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [phone, setPhone] = useState('');
   const [aboutMe, setAboutMe] = useState('');
   const [twitter, setTwitter] = useState('');
@@ -76,6 +77,7 @@ export default function AccountScreen() {
       setCity(currentUser.city || '');
       setProvince(currentUser.province || '');
       setPostalCode(currentUser.postalCode || '');
+      setBirthDate(currentUser.birthDate || '');
       setPhone(currentUser.phone || '');
       setAboutMe(currentUser.aboutMe || currentUser.jobTitle || '');
       setTwitter(currentUser.twitter || '');
@@ -111,6 +113,7 @@ export default function AccountScreen() {
           city: city.trim(),
           province: province.trim(),
           postalCode: postalCode.trim(),
+          birthDate: birthDate.trim(),
           phone: phone.trim(),
           country,
           profilePhoto,
@@ -323,6 +326,18 @@ export default function AccountScreen() {
                 onChangeText={setPostalCode}
                 editable={isEditingProfile}
                 placeholder="e.g. 4027"
+                text={text}
+                mutedText={mutedText}
+                border={border}
+              />
+              <ProfileRow
+                icon="cake-variant"
+                label="Birth date"
+                value={birthDate}
+                onChangeText={setBirthDate}
+                editable={isEditingProfile}
+                keyboardType="numbers-and-punctuation"
+                placeholder="MM/DD/YYYY"
                 text={text}
                 mutedText={mutedText}
                 border={border}

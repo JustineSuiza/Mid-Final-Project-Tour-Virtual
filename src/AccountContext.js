@@ -11,6 +11,7 @@ const DEFAULT_PROFILE = {
   city: '',
   province: '',
   postalCode: '',
+  birthDate: '',
   phone: '',
   country: { name: 'Philippines', flag: '🇵🇭', flagCode: 'ph', code: '+63' },
   profilePhoto: '',
