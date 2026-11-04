@@ -103,7 +103,7 @@ const listRow = (d) => {
   const p = state.progress[d.id];
   return {
     id: d.id, name: d.name, description: d.description, address: d.address, province: d.province,
-    category: d.category, imageUri: d.imageUri,
+    category: d.category, imageUri: d.imageUri, latitude: d.latitude ?? null, longitude: d.longitude ?? null,
     completed: p && p.completed ? 1 : 0,
     bestScore: p ? p.bestScore : null,
     totalQuestions: p ? p.totalQuestions : null,

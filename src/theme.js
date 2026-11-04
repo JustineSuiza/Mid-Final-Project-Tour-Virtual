@@ -4,7 +4,7 @@ export const colors = {
   primary: '#0F4C5C', // Taal Lake teal
   ink: '#14232A',
   muted: '#5B6B72',
-  paper: '#F2F4F2',
+  paper: '#FFFFFF',
   card: '#FFFFFF',
   line: '#D9E0DE',
   gold: '#D99A1E', // kalesa gold

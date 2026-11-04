@@ -25,6 +25,8 @@ export const SEED_DESTINATIONS = [
     category: 'Historical',
     province: 'Laguna',
     address: 'Calamba, Laguna',
+    latitude: 14.2116,
+    longitude: 121.1653,
     description:
       'A replica of the ancestral house where national hero Dr. José Rizal was born on June 19, 1861. The shrine displays family memorabilia and exhibits on his life.',
     history:
@@ -42,6 +44,8 @@ export const SEED_DESTINATIONS = [
     category: 'Cultural',
     province: 'Laguna',
     address: 'Pila, Laguna',
+    latitude: 14.2326,
+    longitude: 121.3646,
     description:
       'A well-preserved Spanish colonial town center arranged around a plaza, with a church, a municipal hall, and ancestral houses that are still lived in.',
     history:
@@ -59,6 +63,8 @@ export const SEED_DESTINATIONS = [
     category: 'Nature',
     province: 'Laguna',
     address: 'Los Baños, Laguna',
+    latitude: 14.1478,
+    longitude: 121.2437,
     description:
       'A forest reserve on the slopes of Mount Makiling, known for its biodiversity, trails, and the legend of the diwata Maria Makiling.',
     history:
@@ -76,6 +82,8 @@ export const SEED_DESTINATIONS = [
     category: 'Cultural',
     province: 'Batangas',
     address: 'Taal, Batangas',
+    latitude: 13.8797,
+    longitude: 120.9236,
     description:
       'A town of stone streets and ancestral houses, home to the Basilica of St. Martin of Tours, one of the largest Catholic churches in Asia.',
     history:
@@ -93,6 +101,8 @@ export const SEED_DESTINATIONS = [
     category: 'Nature',
     province: 'Batangas',
     address: 'Taal Lake, Batangas',
+    latitude: 14.0021,
+    longitude: 120.9934,
     description:
       'A small but active volcano on an island in the middle of Taal Lake, with a crater and surrounding lake that make one of the most recognized views in the region.',
     history:
@@ -110,6 +120,8 @@ export const SEED_DESTINATIONS = [
     category: 'Cultural',
     province: 'Quezon',
     address: 'Lucban, Quezon',
+    latitude: 14.1142,
+    longitude: 121.5556,
     description:
       'A hillside town famous for the Pahiyas Festival, when house fronts are decorated with colorful rice wafers called kiping, fruits, and vegetables.',
     history:
@@ -127,6 +139,8 @@ export const SEED_DESTINATIONS = [
     category: 'Religious',
     province: 'Rizal',
     address: 'Antipolo, Rizal',
+    latitude: 14.5864,
+    longitude: 121.1761,
     description:
       'The shrine of Our Lady of Peace and Good Voyage, a major pilgrimage destination for Catholics from across the country.',
     history:

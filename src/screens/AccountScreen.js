@@ -156,7 +156,7 @@ export default function AccountScreen() {
 
   return (
     <ScrollView
-      style={[styles.screen, { backgroundColor: background }]}
+      style={[styles.screen, { backgroundColor: mode === 'profile' ? '#FFFFFF' : background }]}
       contentContainerStyle={[
         styles.content,
         mode === 'profile' && styles.profileContent,
@@ -466,8 +466,8 @@ export default function AccountScreen() {
             accessibilityRole="button"
             accessibilityLabel="Close country picker"
           />
-          <View style={[styles.countryModal, { backgroundColor: surface, borderColor: border }]}>
-            <Text style={[styles.countryModalTitle, { color: text }]}>Choose your country</Text>
+          <View style={[styles.countryModal, { backgroundColor: '#FFFFFF', borderColor: border }]}>
+            <Text style={styles.countryModalTitle}>Choose your country</Text>
             <ScrollView style={styles.countryList} keyboardShouldPersistTaps="handled">
               {PHONE_COUNTRIES.map((item) => (
                 <Pressable
@@ -481,8 +481,8 @@ export default function AccountScreen() {
                   accessibilityLabel={`${item.name}, dialing code ${item.code}`}
                 >
                   <CountryFlag country={item} fallback={PHONE_COUNTRIES[0]} />
-                  <Text style={[styles.countryName, { color: text }]}>{item.name}</Text>
-                  <Text style={[styles.countryCode, { color: mutedText }]}>{item.code}</Text>
+                  <Text style={styles.countryName}>{item.name}</Text>
+                  <Text style={styles.countryCode}>{item.code}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -502,7 +502,7 @@ export default function AccountScreen() {
             accessibilityRole="button"
             accessibilityLabel="Close profile options"
           />
-          <View style={[styles.profileMenu, { backgroundColor: surface, borderColor: border }]}>
+          <View style={[styles.profileMenu, { backgroundColor: '#FFFFFF', borderColor: border }]}>
             <Pressable
               style={styles.profileMenuItem}
               onPress={() => {
@@ -512,8 +512,8 @@ export default function AccountScreen() {
               }}
               accessibilityRole="button"
             >
-              <Icon name="pencil-outline" size={20} color={accent} />
-              <Text style={[styles.profileMenuText, { color: text }]}>Edit</Text>
+              <Icon name="pencil-outline" size={20} color="#000000" />
+              <Text style={[styles.profileMenuText, { color: '#000000' }]}>Edit</Text>
             </Pressable>
             <View style={[styles.profileMenuDivider, { backgroundColor: border }]} />
             <Pressable
@@ -524,8 +524,8 @@ export default function AccountScreen() {
               }}
               accessibilityRole="button"
             >
-              <Icon name="eye-outline" size={20} color={accent} />
-              <Text style={[styles.profileMenuText, { color: text }]}>Preview</Text>
+              <Icon name="eye-outline" size={20} color="#000000" />
+              <Text style={[styles.profileMenuText, { color: '#000000' }]}>Preview</Text>
             </Pressable>
           </View>
         </View>
@@ -588,12 +588,12 @@ function ProfileRow({
 }) {
   const content = (
     <>
-      <IconComponent name={icon} size={19} color={mutedText} />
+      <IconComponent name={icon} size={19} color="#000000" />
       <View style={[styles.profileRowContent, !last && { borderBottomColor: border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
-        <Text style={[styles.profileRowLabel, { color: mutedText }]}>{label}</Text>
+        <Text style={styles.profileRowLabel}>{label}</Text>
         <View style={styles.profileRowValue}>
           {prefix}
-          {prefixText ? <Text style={[styles.profileRowPrefixText, { color: text }]}>{prefixText}</Text> : null}
+          {prefixText ? <Text style={styles.profileRowPrefixText}>{prefixText}</Text> : null}
           {editable ? (
             <TextInput
               value={value}
@@ -601,13 +601,13 @@ function ProfileRow({
               keyboardType={keyboardType}
               placeholder={placeholder}
               placeholderTextColor="#8A979C"
-              style={[styles.profileRowInput, { color: text }]}
+              style={styles.profileRowInput}
               accessibilityLabel={label}
             />
           ) : (
-            <Text style={[styles.profileRowText, { color: text }]} numberOfLines={1}>{value}</Text>
+            <Text style={styles.profileRowText} numberOfLines={1}>{value}</Text>
           )}
-          {onPress ? <Icon name="chevron-right" size={20} color={mutedText} /> : null}
+          {onPress ? <Icon name="chevron-right" size={20} color="#000000" /> : null}
         </View>
       </View>
     </>
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bannerTop: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  bannerTitle: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  bannerTitle: { color: '#FFFFFF', fontFamily: fonts.sans, fontSize: 15, fontWeight: '600' },
   avatarButton: { marginTop: 18 },
   profilePhoto: { width: 78, height: 78, borderRadius: 39, borderWidth: 2, borderColor: '#FFFFFF' },
   photoPlaceholder: {
@@ -706,18 +706,20 @@ const styles = StyleSheet.create({
   bannerPhotoLink: { marginTop: 5 },
   bannerNameInput: {
     color: '#FFFFFF',
+    fontFamily: fonts.sans,
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
     minWidth: 160,
     marginTop: 6,
   },
-  bannerNameText: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', textAlign: 'center', marginTop: 6 },
-  aboutMeLabel: { color: '#FFFFFF', fontSize: 13, fontWeight: '600', marginTop: 8 },
+  bannerNameText: { color: '#FFFFFF', fontFamily: fonts.sans, fontSize: 18, fontWeight: '700', textAlign: 'center', marginTop: 6 },
+  aboutMeLabel: { color: '#FFFFFF', fontFamily: fonts.sans, fontSize: 13, fontWeight: '600', marginTop: 8 },
   aboutMeInput: {
     width: '100%',
     minHeight: 64,
     color: '#FFFFFF',
+    fontFamily: fonts.sans,
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -725,6 +727,7 @@ const styles = StyleSheet.create({
   },
   aboutMeText: {
     color: 'rgba(255,255,255,0.82)',
+    fontFamily: fonts.sans,
     fontSize: 13,
     lineHeight: 19,
     textAlign: 'center',
@@ -738,11 +741,11 @@ const styles = StyleSheet.create({
   },
   profileRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 12 },
   profileRowContent: { flex: 1, minHeight: 62, justifyContent: 'center', paddingVertical: 9, gap: 3 },
-  profileRowLabel: { fontSize: 12 },
+  profileRowLabel: { color: '#000000', fontFamily: fonts.sans, fontSize: 12 },
   profileRowValue: { minHeight: 24, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  profileRowText: { flex: 1, fontSize: 14 },
-  profileRowInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 2 },
-  profileRowPrefixText: { fontSize: 14, fontWeight: '600' },
+  profileRowText: { flex: 1, color: '#000000', fontFamily: fonts.sans, fontSize: 14 },
+  profileRowInput: { flex: 1, minWidth: 0, color: '#000000', fontFamily: fonts.sans, fontSize: 14, paddingVertical: 2 },
+  profileRowPrefixText: { color: '#000000', fontFamily: fonts.sans, fontSize: 14, fontWeight: '600' },
   rowFlag: { width: 26, height: 26, borderRadius: 13, marginRight: 0 },
   fieldError: { color: '#A8432F', fontSize: 13, lineHeight: 18, marginTop: 8, textAlign: 'center' },
   fieldLabel: { fontSize: 14, fontWeight: '600', marginBottom: 6 },
@@ -773,7 +776,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     textAlign: 'center',
   },
-  countryName: { flex: 1, fontSize: 15 },
+  countryName: { flex: 1, color: '#000000', fontFamily: fonts.sans, fontSize: 15 },
   phoneLabelRow: { flexDirection: 'row', alignItems: 'center' },
   phoneInput: {
     minHeight: 48,
@@ -843,10 +846,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   profileMenuItem: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14 },
-  profileMenuText: { fontSize: 15, fontWeight: '600' },
+  profileMenuText: { color: '#000000', fontFamily: fonts.sans, fontSize: 15, fontWeight: '600' },
   profileMenuDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 12 },
   warningMessage: { flex: 1, fontSize: 14, lineHeight: 20 },
-  countryModalTitle: { fontFamily: fonts.serif, fontSize: 20, fontWeight: '700', marginBottom: 8 },
+  countryModalTitle: { color: '#000000', fontFamily: fonts.sans, fontSize: 20, fontWeight: '700', marginBottom: 8 },
   countryList: { flexGrow: 0 },
   countryOption: {
     minHeight: 48,
@@ -854,7 +857,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  countryCode: { fontSize: 14, marginLeft: 8 },
+  countryCode: { color: '#000000', fontFamily: fonts.sans, fontSize: 14, marginLeft: 8 },
   submitButton: { marginTop: 4 },
   saveChangesLink: { alignSelf: 'flex-end', paddingVertical: 12, paddingHorizontal: 4 },
   notice: { fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 12 },

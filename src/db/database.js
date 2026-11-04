@@ -10,7 +10,7 @@ function getDb() {
 
 // Columns used by list screens. Long text and the photo gallery are left out on purpose.
 const LIST_SELECT = `d.id, d.name, d.description, d.address, d.province, d.category, d.imageUri,
-  COALESCE(p.completed, 0) AS completed, p.bestScore, p.totalQuestions`;
+  d.latitude, d.longitude, COALESCE(p.completed, 0) AS completed, p.bestScore, p.totalQuestions`;
 const LIST_FROM = `FROM destinations d LEFT JOIN progress p ON p.destinationId = d.id`;
 
 const parsePhotos = (value) => {

@@ -204,9 +204,11 @@ function SlidingTabBar({ state, descriptors, navigation }) {
                     style={focused ? styles.hiddenIcon : undefined}
                   />
                 )}
-                <Text style={[styles.tabLabel, { color: focused ? accent : mutedText }]}>
-                  {label}
-                </Text>
+                {focused ? (
+                  <Text style={[styles.tabLabel, { color: accent }]}>
+                    {label}
+                  </Text>
+                ) : null}
               </Pressable>
             );
           })}
@@ -278,19 +280,17 @@ const styles = StyleSheet.create({
   tabBarOuter: {
     backgroundColor: 'transparent',
     paddingTop: 8,
-    paddingHorizontal: 18,
+    paddingHorizontal: 0,
   },
   barSlot: {
-    alignSelf: 'center',
     width: '100%',
-    maxWidth: 420,
     paddingTop: NOTCH_SIZE / 2,
   },
   tabBar: {
     flexDirection: 'row',
     width: '100%',
     height: BAR_HEIGHT,
-    borderRadius: 24,
+    borderRadius: 0,
     backgroundColor: '#fff',
     shadowColor: '#14232A',
     shadowOffset: { width: 0, height: 5 },

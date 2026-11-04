@@ -16,7 +16,7 @@ function AppContent() {
       <View style={{
         flex: 1,
         alignItems: 'center',
-        backgroundColor: isDark ? '#080E14' : Platform.OS === 'web' ? '#DCE3E1' : background,
+        backgroundColor: isDark ? '#080E14' : '#FFFFFF',
       }}>
         <View style={{ flex: 1, width: '100%', maxWidth: Platform.OS === 'web' ? MAX_WIDTH : undefined, backgroundColor: background }}>
           <AppNavigator />

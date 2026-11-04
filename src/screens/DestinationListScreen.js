@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Easing, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Easing, FlatList, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import AnimatedCheckbox from '../components/AnimatedCheckbox';
 import DestinationCard from '../components/DestinationCard';
+import DestinationMap from '../components/DestinationMap';
+import FilterChip from '../components/FilterChip';
 import { getDestinations } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
@@ -34,8 +37,48 @@ function AnimatedDestinationCard({ item, index, filterKey, onPress }) {
   );
 }
 
+function ResultsCount({ count, color }) {
+  const bump = useRef(new Animated.Value(0)).current;
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (!started.current) {
+      started.current = true;
+      return;
+    }
+    bump.setValue(0);
+    Animated.sequence([
+      Animated.timing(bump, {
+        toValue: 1,
+        duration: 150,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(bump, { toValue: 0, friction: 5, tension: 120, useNativeDriver: true }),
+    ]).start();
+  }, [bump, count]);
+
+  return (
+    <Animated.Text
+      style={[
+        styles.resultCount,
+        { color },
+        {
+          transform: [
+            { translateY: bump.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) },
+            { scale: bump.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) },
+          ],
+        },
+      ]}
+    >
+      {count} {count === 1 ? 'destination' : 'destinations'}
+    </Animated.Text>
+  );
+}
+
 export default function DestinationListScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { background, surface, text, mutedText, border, accent } = useAppTheme();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -69,6 +112,13 @@ export default function DestinationListScreen({ navigation, route }) {
   );
 
   const filtering = search.trim() !== '' || selectedCategories.length > 0;
+  const mapHeight = Math.max(280, Math.min(420, windowHeight * 0.42));
+  const mappedItems = items.filter((item) =>
+    item.latitude !== null && item.latitude !== undefined && item.latitude !== ''
+    && item.longitude !== null && item.longitude !== undefined && item.longitude !== ''
+    && Number.isFinite(Number(item.latitude)) && Number.isFinite(Number(item.longitude))
+    && Math.abs(Number(item.latitude)) <= 90 && Math.abs(Number(item.longitude)) <= 180
+  );
   const filterKey = `${search.trim()}|${selectedCategories.join(',')}`;
   const toggleCategory = (option) => {
     setSelectedCategories((current) =>
@@ -80,8 +130,6 @@ export default function DestinationListScreen({ navigation, route }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: background, paddingTop: insets.top + 12 }}>
-      <Text style={[styles.title, { color: text }]}>Destinations</Text>
-
       <View style={styles.searchWrap}>
         <View style={styles.searchRow}>
           <View style={[styles.search, { backgroundColor: surface, borderColor: border }]}>
@@ -130,57 +178,71 @@ export default function DestinationListScreen({ navigation, route }) {
             styles.filterDropdown,
             { backgroundColor: surface, borderColor: border },
             {
-              maxHeight: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 200] }),
+              maxHeight: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 300] }),
               opacity: filterAnimation,
               transform: [{ translateY: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
             },
           ]}
         >
-          <Pressable
-            style={styles.filterOption}
-            onPress={() => {
-              setSelectedCategories([]);
-              setFilterOpen(false);
-            }}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: selectedCategories.length === 0 }}
-          >
-            <Text style={[styles.filterOptionText, { color: text }]}>All</Text>
-            {selectedCategories.length === 0 ? <Icon name="check" size={16} color={colors.primary} /> : null}
-          </Pressable>
           {categories.map((option) => {
             const selected = selectedCategories.includes(option);
-            const tint = categoryMeta[option].color;
+            const meta = categoryMeta[option];
             return (
-              <Pressable
+              <AnimatedCheckbox
                 key={option}
-                style={styles.filterOption}
+                label={option}
+                checked={selected}
+                tint={meta.color}
+                textColor={text}
+                borderColor={border}
                 onPress={() => toggleCategory(option)}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: selected }}
-              >
-                <Text style={[styles.filterOptionText, { color: text }]} numberOfLines={1}>{option}</Text>
-                {selected ? <Icon name="check" size={16} color={tint} /> : null}
-              </Pressable>
+              />
             );
           })}
         </Animated.View>
       </View>
 
+      <View style={styles.resultBar}>
+        <ResultsCount count={items.length} color={text} />
+        {selectedCategories.map((categoryName) => (
+          <FilterChip
+            key={categoryName}
+            label={categoryName}
+            tint={categoryMeta[categoryName].color}
+            onRemove={() => toggleCategory(categoryName)}
+          />
+        ))}
+        {selectedCategories.length > 0 ? (
+          <Pressable
+            onPress={() => setSelectedCategories([])}
+            accessibilityRole="button"
+            accessibilityLabel="Clear all category filters"
+            hitSlop={8}
+          >
+            <Text style={[styles.clearAll, { color: mutedText }]}>Clear all</Text>
+          </Pressable>
+        ) : null}
+      </View>
+
       <FlatList
         data={items}
         keyExtractor={(i) => String(i.id)}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 110 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
+        ListHeaderComponent={mappedItems.length > 0
+          ? <DestinationMap destinations={mappedItems} height={mapHeight} />
+          : null}
         renderItem={({ item, index }) => (
-          <AnimatedDestinationCard
-            item={item}
-            index={index}
-            filterKey={filterKey}
-            onPress={() => navigation.navigate('DestinationDetail', { id: item.id })}
-          />
+          <View style={styles.destinationItem}>
+            <AnimatedDestinationCard
+              item={item}
+              index={index}
+              filterKey={filterKey}
+              onPress={() => navigation.navigate('DestinationDetail', { id: item.id })}
+            />
+          </View>
         )}
         ListEmptyComponent={
-          <View style={{ paddingVertical: 40 }}>
+          <View style={styles.emptyState}>
             <Text style={[styles.emptyTitle, { color: text }]}>{filtering ? 'No destinations match' : 'No destinations yet'}</Text>
             <Text style={[styles.emptyText, { color: mutedText }]}>
               {filtering
@@ -204,7 +266,8 @@ export default function DestinationListScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: fonts.serif, fontSize: 30, fontWeight: '700', color: colors.ink, paddingHorizontal: 20, marginBottom: 12 },
+  destinationItem: { paddingHorizontal: 20 },
+  emptyState: { paddingHorizontal: 20, paddingVertical: 40 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   search: {
     flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff',
@@ -234,12 +297,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 58,
     right: 0,
-    width: 152,
+    width: 212,
     overflow: 'hidden',
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.line,
-    borderRadius: 12,
+    borderRadius: 16,
+    paddingVertical: 6,
     paddingHorizontal: 4,
     elevation: 8,
     shadowColor: '#14232A',
@@ -247,14 +311,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.16,
     shadowRadius: 8,
   },
-  filterOption: {
+  resultBar: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    paddingHorizontal: 20,
+    marginBottom: 10,
     minHeight: 30,
-    paddingHorizontal: 6,
   },
-  filterOptionText: { fontSize: 13, color: colors.ink, fontWeight: '600' },
+  resultCount: { fontSize: 14, fontWeight: '700', marginRight: 2 },
+  clearAll: { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
   fab: {
     position: 'absolute', right: 20, width: 58, height: 58, borderRadius: 29,
     backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center',

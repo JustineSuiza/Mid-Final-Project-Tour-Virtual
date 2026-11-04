@@ -93,7 +93,7 @@ export function ThemeProvider({ children }) {
     musicVolume,
     setMusicVolume: changeMusicVolume,
     musicError,
-    background: isDark ? '#0D141C' : '#F2F4F2',
+    background: isDark ? '#0D141C' : '#FFFFFF',
     surface: isDark ? '#16212D' : '#FFFFFF',
     text: isDark ? '#E8EEF5' : '#14232A',
     mutedText: isDark ? '#93A4B8' : '#5B6B72',
