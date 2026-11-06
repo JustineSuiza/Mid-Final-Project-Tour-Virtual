@@ -3,6 +3,7 @@ import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View 
 import { FontAwesome6, MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Button from '../components/Button';
+import DatePickerModal from '../components/DatePickerModal';
 import Field from '../components/Field';
 import { useAppTheme } from '../ThemeContext';
 import { fonts } from '../theme';
@@ -66,6 +67,7 @@ export default function AccountScreen() {
   const [facebook, setFacebook] = useState('');
   const [country, setCountry] = useState(PHONE_COUNTRIES[0]);
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
+  const [birthDatePickerVisible, setBirthDatePickerVisible] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState('');
   const [photoError, setPhotoError] = useState('');
 
@@ -245,7 +247,7 @@ export default function AccountScreen() {
               ) : (
                 <Text style={styles.bannerNameText}>{name || 'Full name'}</Text>
               )}
-              <Text style={styles.aboutMeLabel}>About myself</Text>
+              <Text style={styles.aboutMeLabel}>Bio</Text>
               {isEditingProfile ? (
                 <TextInput
                   value={aboutMe}
@@ -297,51 +299,57 @@ export default function AccountScreen() {
                 mutedText={mutedText}
                 border={border}
               />
-              <ProfileRow
-                icon="city-variant-outline"
-                label="City"
-                value={city}
-                onChangeText={setCity}
-                editable={isEditingProfile}
-                placeholder="e.g. Calamba"
-                text={text}
-                mutedText={mutedText}
-                border={border}
-              />
-              <ProfileRow
-                icon="map-outline"
-                label="Province"
-                value={province}
-                onChangeText={setProvince}
-                editable={isEditingProfile}
-                placeholder="e.g. Laguna"
-                text={text}
-                mutedText={mutedText}
-                border={border}
-              />
-              <ProfileRow
-                icon="mailbox-outline"
-                label="Postal code"
-                value={postalCode}
-                onChangeText={setPostalCode}
-                editable={isEditingProfile}
-                placeholder="e.g. 4027"
-                text={text}
-                mutedText={mutedText}
-                border={border}
-              />
-              <ProfileRow
-                icon="cake-variant"
-                label="Birth date"
-                value={birthDate}
-                onChangeText={setBirthDate}
-                editable={isEditingProfile}
-                keyboardType="numbers-and-punctuation"
-                placeholder="MM/DD/YYYY"
-                text={text}
-                mutedText={mutedText}
-                border={border}
-              />
+              <View style={styles.profileRowGrid}>
+                <ProfileRow
+                  icon="city-variant-outline"
+                  label="City"
+                  value={city}
+                  onChangeText={setCity}
+                  editable={isEditingProfile}
+                  placeholder="e.g. Calamba"
+                  text={text}
+                  mutedText={mutedText}
+                  border={border}
+                  style={styles.profileGridItem}
+                />
+                <ProfileRow
+                  icon="map-outline"
+                  label="Province"
+                  value={province}
+                  onChangeText={setProvince}
+                  editable={isEditingProfile}
+                  placeholder="e.g. Laguna"
+                  text={text}
+                  mutedText={mutedText}
+                  border={border}
+                  style={styles.profileGridItem}
+                />
+              </View>
+              <View style={styles.profileRowGrid}>
+                <ProfileRow
+                  icon="mailbox-outline"
+                  label="Postal code"
+                  value={postalCode}
+                  onChangeText={setPostalCode}
+                  editable={isEditingProfile}
+                  placeholder="e.g. 4027"
+                  text={text}
+                  mutedText={mutedText}
+                  border={border}
+                  style={styles.profileGridItem}
+                />
+                <ProfileRow
+                  icon="cake-variant"
+                  label="Birth date"
+                  value={birthDate || 'Select date'}
+                  editable={false}
+                  onPress={isEditingProfile ? () => setBirthDatePickerVisible(true) : undefined}
+                  text={text}
+                  mutedText={mutedText}
+                  border={border}
+                  style={styles.profileGridItem}
+                />
+              </View>
               <ProfileRow
                 icon="cellphone"
                 label="Mobile"
@@ -438,7 +446,7 @@ export default function AccountScreen() {
 
       {!loading && mode === 'profile' ? <View style={styles.modeSwitch}>
         <AccountLink
-          label="Sign out"
+          label="Log out"
           onPress={async () => {
             try {
               await logout();
@@ -530,6 +538,12 @@ export default function AccountScreen() {
           </View>
         </View>
       </Modal>
+      <DatePickerModal
+        visible={birthDatePickerVisible}
+        value={birthDate}
+        onClose={() => setBirthDatePickerVisible(false)}
+        onSelect={setBirthDate}
+      />
       <Modal
         visible={!!warningMessage}
         transparent
@@ -585,6 +599,7 @@ function ProfileRow({
   mutedText,
   border,
   last = false,
+  style,
 }) {
   const content = (
     <>
@@ -616,7 +631,7 @@ function ProfileRow({
   if (onPress) {
     return (
       <Pressable
-        style={styles.profileRow}
+        style={[styles.profileRow, style]}
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${value}. Change`}
@@ -625,7 +640,7 @@ function ProfileRow({
       </Pressable>
     );
   }
-  return <View style={styles.profileRow}>{content}</View>;
+  return <View style={[styles.profileRow, style]}>{content}</View>;
 }
 
 function CountryFlag({ country, fallback, style }) {
@@ -739,6 +754,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     marginBottom: 20,
   },
+  profileRowGrid: { flexDirection: 'row', gap: 12 },
+  profileGridItem: { flex: 1, minWidth: 0 },
   profileRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', gap: 12 },
   profileRowContent: { flex: 1, minHeight: 62, justifyContent: 'center', paddingVertical: 9, gap: 3 },
   profileRowLabel: { color: '#000000', fontFamily: fonts.sans, fontSize: 12 },
