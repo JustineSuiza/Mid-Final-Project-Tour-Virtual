@@ -360,7 +360,7 @@ export default function AppNavigator() {
         }}
       >
         <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
-        <Stack.Screen name="DestinationDetail" component={DestinationDetailScreen} options={{ title: '' }} />
+        <Stack.Screen name="DestinationDetail" component={DestinationDetailScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DestinationForm" component={DestinationFormScreen} />
         <Stack.Screen name="VirtualTour" component={VirtualTourScreen} options={{ title: 'Virtual tour' }} />
         <Stack.Screen name="Tour360" component={Tour360Screen} options={{ title: '360° tour' }} />

@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../components/Button';
 import DestinationImage from '../components/DestinationImage';
 import MapLocation from '../components/MapLocation';
@@ -14,6 +15,7 @@ import { categoryMeta, colors, fonts } from '../theme';
 
 export default function DestinationDetailScreen({ route, navigation }) {
   const { background, surface, text, mutedText, border } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const { id } = route.params;
   const [dest, setDest] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -54,7 +56,18 @@ export default function DestinationDetailScreen({ route, navigation }) {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: background }} contentContainerStyle={{ paddingBottom: 40 }}>
-      <DestinationImage uri={dest.imageUri} category={dest.category} style={styles.hero} iconSize={64} />
+      <View>
+        <DestinationImage uri={dest.imageUri} category={dest.category} style={styles.hero} iconSize={64} />
+        <Pressable
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          hitSlop={10}
+          style={[styles.backButton, { top: insets.top + 10 }]}
+        >
+          <Icon name="arrow-left" size={24} color="#fff" />
+        </Pressable>
+      </View>
 
       <View style={[styles.content, { backgroundColor: background }]}>
         <View style={[styles.pill, { backgroundColor: meta.color + '1A' }]}>
@@ -127,7 +140,17 @@ export default function DestinationDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  hero: { width: '100%', height: 240 },
+  hero: { width: '100%', height: 280 },
+  backButton: {
+    position: 'absolute',
+    left: 16,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.42)',
+  },
   content: { padding: 20 },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   pillText: { fontSize: 13, fontWeight: '700' },
