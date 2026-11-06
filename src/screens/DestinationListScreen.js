@@ -43,6 +43,28 @@ export default function DestinationListScreen({ navigation, route }) {
   const [items, setItems] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const filterAnimation = useRef(new Animated.Value(0)).current;
+  const tabBarTimer = useRef(null);
+  const tabBarHidden = useRef(false);
+  const tabNavigation = navigation.getParent();
+
+  const setTabBarHidden = useCallback((hidden) => {
+    if (tabBarHidden.current === hidden) return;
+    tabBarHidden.current = hidden;
+    tabNavigation?.setOptions({ tabBarStyle: hidden ? { display: 'none' } : undefined });
+  }, [tabNavigation]);
+
+  useFocusEffect(
+    useCallback(() => () => {
+      clearTimeout(tabBarTimer.current);
+      setTabBarHidden(false);
+    }, [setTabBarHidden])
+  );
+
+  const handleListScroll = useCallback(() => {
+    setTabBarHidden(true);
+    clearTimeout(tabBarTimer.current);
+    tabBarTimer.current = setTimeout(() => setTabBarHidden(false), 700);
+  }, [setTabBarHidden]);
 
   useEffect(() => {
     Animated.timing(filterAnimation, {
@@ -178,7 +200,9 @@ export default function DestinationListScreen({ navigation, route }) {
         numColumns={numColumns}
         columnWrapperStyle={compactCards ? styles.destinationRow : undefined}
         keyExtractor={(i) => String(i.id)}
-        contentContainerStyle={[styles.destinationList, { paddingBottom: 32 }]}
+        contentContainerStyle={styles.destinationList}
+        onScroll={handleListScroll}
+        scrollEventThrottle={100}
         renderItem={({ item, index }) => (
           <View style={[styles.destinationItem, compactCards && styles.compactDestinationItem]}>
             <AnimatedDestinationCard

@@ -36,14 +36,15 @@ const tabIcons = {
   Account: 'account-circle-outline',
 };
 
-const BAR_HEIGHT = 64;
-const CIRCLE_SIZE = 56;
-const NOTCH_SIZE = 74;
+const BAR_HEIGHT = 56;
+const CIRCLE_SIZE = 48;
+const NOTCH_SIZE = 60;
 
 function SlidingTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const { surface, background, mutedText, accent } = useAppTheme();
   const { currentUser } = useAccount();
+  const activeOptions = descriptors[state.routes[state.index].key]?.options;
   const [barWidth, setBarWidth] = useState(0);
   const [displayIndex, setDisplayIndex] = useState(state.index);
 
@@ -162,6 +163,8 @@ function SlidingTabBar({ state, descriptors, navigation }) {
     },
   }), [animateTo, barWidth, centerOf, navigation, state.index, state.routes, tabAt, tabWidth, translateX, translateY]);
 
+  if (activeOptions?.tabBarStyle?.display === 'none') return null;
+
   return (
     <View style={[styles.tabBarOuter, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <View
@@ -279,12 +282,11 @@ function Tabs() {
 const styles = StyleSheet.create({
   tabBarOuter: {
     backgroundColor: 'transparent',
-    paddingTop: 8,
+    paddingTop: 0,
     paddingHorizontal: 0,
   },
   barSlot: {
     width: '100%',
-    paddingTop: NOTCH_SIZE / 2,
   },
   tabBar: {
     flexDirection: 'row',
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
   notch: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: -NOTCH_SIZE / 2,
     width: NOTCH_SIZE,
     height: NOTCH_SIZE,
     borderRadius: NOTCH_SIZE / 2,
@@ -311,7 +313,7 @@ const styles = StyleSheet.create({
   activeCircle: {
     position: 'absolute',
     left: 0,
-    top: (NOTCH_SIZE - CIRCLE_SIZE) / 2,
+    top: -CIRCLE_SIZE / 2,
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
