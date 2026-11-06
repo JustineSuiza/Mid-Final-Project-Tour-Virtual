@@ -5,9 +5,41 @@ import DestinationImage from './DestinationImage';
 import { useAppTheme } from '../ThemeContext';
 import { categoryMeta, colors, fonts } from '../theme';
 
-export default function DestinationCard({ item, onPress }) {
+export default function DestinationCard({ item, onPress, compact = false }) {
   const meta = categoryMeta[item.category] || categoryMeta.Cultural;
   const { surface, text, mutedText, border } = useAppTheme();
+  if (compact) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.name}, ${item.address}, ${item.category}. ${item.description}`}
+        style={({ pressed }) => [
+          styles.compactCard,
+          { backgroundColor: surface, borderColor: border },
+          pressed && { opacity: 0.9 },
+        ]}
+      >
+        <View style={styles.imageWrap}>
+          <DestinationImage uri={item.imageUri} category={item.category} style={styles.compactImg} />
+          <View style={styles.location}>
+            <Icon name="map-marker" size={14} color="#fff" />
+            <Text style={styles.locationText} numberOfLines={1}>{item.address}</Text>
+          </View>
+        </View>
+        <View style={styles.compactBody}>
+          <Text style={[styles.name, { color: text }]} numberOfLines={2}>{item.name}</Text>
+          <View style={[styles.compactPill, { backgroundColor: meta.color + '1A' }]}>
+            <Text style={[styles.compactPillText, { color: meta.color }]} numberOfLines={1}>{item.category}</Text>
+          </View>
+          <Text style={[styles.description, { color: mutedText }]} numberOfLines={3}>
+            {item.description}
+          </Text>
+        </View>
+      </Pressable>
+    );
+  }
+
   return (
     <Pressable
       onPress={onPress}
@@ -56,4 +88,26 @@ const styles = StyleSheet.create({
   pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
   pillText: { fontSize: 12, fontWeight: '700' },
   done: { fontSize: 12, color: colors.success, fontWeight: '600' },
+  compactCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  imageWrap: { position: 'relative' },
+  compactImg: { width: '100%', height: 126 },
+  location: {
+    position: 'absolute',
+    left: 8,
+    right: 8,
+    bottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  locationText: { flex: 1, color: '#fff', fontSize: 12, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.8)', textShadowRadius: 4 },
+  compactBody: { padding: 10, gap: 7 },
+  compactPill: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  compactPillText: { fontSize: 11, fontWeight: '700' },
+  description: { fontSize: 12, lineHeight: 17 },
 });

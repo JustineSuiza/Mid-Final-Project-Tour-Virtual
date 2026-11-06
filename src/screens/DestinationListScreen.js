@@ -9,7 +9,7 @@ import { getDestinations } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
 
-function AnimatedDestinationCard({ item, index, filterKey, onPress }) {
+function AnimatedDestinationCard({ item, index, filterKey, onPress, compact }) {
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -30,13 +30,13 @@ function AnimatedDestinationCard({ item, index, filterKey, onPress }) {
         transform: [{ scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] }) }],
       }}
     >
-      <DestinationCard item={item} onPress={onPress} />
+      <DestinationCard item={item} onPress={onPress} compact={compact} />
     </Animated.View>
   );
 }
 
 export default function DestinationListScreen({ navigation, route }) {
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const { background, surface, text, mutedText, border, accent } = useAppTheme();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -70,6 +70,8 @@ export default function DestinationListScreen({ navigation, route }) {
   );
 
   const filtering = search.trim() !== '' || selectedCategories.length > 0;
+  const compactCards = windowWidth < 600;
+  const numColumns = compactCards ? 2 : 1;
   const mapHeight = Math.max(220, Math.min(360, windowHeight * 0.36));
   const mappedItems = items.filter((item) =>
     item.latitude !== null && item.latitude !== undefined && item.latitude !== ''
@@ -93,7 +95,7 @@ export default function DestinationListScreen({ navigation, route }) {
       <View style={styles.searchWrap}>
         <View style={styles.searchRow}>
           <View style={[styles.search, { backgroundColor: surface, borderColor: border }]}>
-            <Icon name="magnify" size={26} color={mutedText} style={styles.searchIcon} />
+            <Icon name="magnify" size={22} color={mutedText} style={styles.searchIcon} />
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -105,7 +107,7 @@ export default function DestinationListScreen({ navigation, route }) {
             />
             {search ? (
               <Pressable onPress={() => setSearch('')} accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={10}>
-                <Icon name="close-circle" size={18} color={mutedText} />
+                <Icon name="close-circle" size={16} color={mutedText} />
               </Pressable>
             ) : null}
           </View>
@@ -122,7 +124,7 @@ export default function DestinationListScreen({ navigation, route }) {
           >
             <Icon
               name="filter-variant"
-              size={22}
+              size={20}
               color={filterOpen || selectedCategories.length ? accent : mutedText}
             />
             {selectedCategories.length > 0 ? (
@@ -135,7 +137,7 @@ export default function DestinationListScreen({ navigation, route }) {
             accessibilityRole="button"
             accessibilityLabel="Add destination"
           >
-            <Icon name="plus" size={26} color={colors.ink} />
+            <Icon name="plus" size={22} color={colors.ink} />
           </Pressable>
         </View>
         <Animated.View
@@ -171,15 +173,19 @@ export default function DestinationListScreen({ navigation, route }) {
       </View>
 
       <FlatList
+        key={numColumns}
         data={items}
+        numColumns={numColumns}
+        columnWrapperStyle={compactCards ? styles.destinationRow : undefined}
         keyExtractor={(i) => String(i.id)}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={[styles.destinationList, { paddingBottom: 32 }]}
         renderItem={({ item, index }) => (
-          <View style={styles.destinationItem}>
+          <View style={[styles.destinationItem, compactCards && styles.compactDestinationItem]}>
             <AnimatedDestinationCard
               item={item}
               index={index}
               filterKey={filterKey}
+              compact={compactCards}
               onPress={() => navigation.navigate('DestinationDetail', { id: item.id })}
             />
           </View>
@@ -200,20 +206,23 @@ export default function DestinationListScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  destinationItem: { paddingHorizontal: 20 },
+  destinationList: { paddingHorizontal: 14 },
+  destinationRow: { gap: 10 },
+  destinationItem: { paddingHorizontal: 6 },
+  compactDestinationItem: { flex: 1, paddingHorizontal: 0 },
   emptyState: { paddingHorizontal: 20, paddingVertical: 40 },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   search: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff',
-    borderWidth: 1, borderColor: colors.line, borderRadius: 25, paddingHorizontal: 14, height: 50,
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff',
+    borderWidth: 1, borderColor: colors.line, borderRadius: 20, paddingHorizontal: 12, height: 40,
   },
   searchIcon: { opacity: 0.55 },
   searchWrap: { position: 'relative', zIndex: 2, marginHorizontal: 20, marginVertical: 12 },
-  input: { flex: 1, fontSize: 16, color: colors.ink, paddingVertical: 0 },
+  input: { flex: 1, fontSize: 14, color: colors.ink, paddingVertical: 0 },
   actionButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -221,8 +230,8 @@ const styles = StyleSheet.create({
   addButton: { backgroundColor: colors.gold, borderColor: colors.gold },
   filterDot: {
     position: 'absolute',
-    top: 9,
-    right: 9,
+    top: 7,
+    right: 7,
     width: 7,
     height: 7,
     borderRadius: 4,
@@ -230,7 +239,7 @@ const styles = StyleSheet.create({
   },
   filterDropdown: {
     position: 'absolute',
-    bottom: 58,
+    bottom: 48,
     right: 0,
     width: 212,
     overflow: 'hidden',
