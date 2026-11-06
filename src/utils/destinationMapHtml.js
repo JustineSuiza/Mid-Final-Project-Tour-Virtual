@@ -54,7 +54,6 @@ export function createDestinationMapHtml(destinations) {
           message.textContent = 'Mapbox could not load the map: '
             + ((event.error && event.error.message) || 'check the token and internet connection.');
         });
-        map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
         const bounds = new mapboxgl.LngLatBounds();
         places.forEach((place) => {
           const popupContent = document.createElement('div');

@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, FlatList, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import AnimatedCheckbox from '../components/AnimatedCheckbox';
 import DestinationCard from '../components/DestinationCard';
 import DestinationMap from '../components/DestinationMap';
-import FilterChip from '../components/FilterChip';
 import { getDestinations } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
@@ -37,47 +35,7 @@ function AnimatedDestinationCard({ item, index, filterKey, onPress }) {
   );
 }
 
-function ResultsCount({ count, color }) {
-  const bump = useRef(new Animated.Value(0)).current;
-  const started = useRef(false);
-
-  useEffect(() => {
-    if (!started.current) {
-      started.current = true;
-      return;
-    }
-    bump.setValue(0);
-    Animated.sequence([
-      Animated.timing(bump, {
-        toValue: 1,
-        duration: 150,
-        easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
-      }),
-      Animated.spring(bump, { toValue: 0, friction: 5, tension: 120, useNativeDriver: true }),
-    ]).start();
-  }, [bump, count]);
-
-  return (
-    <Animated.Text
-      style={[
-        styles.resultCount,
-        { color },
-        {
-          transform: [
-            { translateY: bump.interpolate({ inputRange: [0, 1], outputRange: [0, -4] }) },
-            { scale: bump.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) },
-          ],
-        },
-      ]}
-    >
-      {count} {count === 1 ? 'destination' : 'destinations'}
-    </Animated.Text>
-  );
-}
-
 export default function DestinationListScreen({ navigation, route }) {
-  const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const { background, surface, text, mutedText, border, accent } = useAppTheme();
   const [search, setSearch] = useState('');
@@ -112,7 +70,7 @@ export default function DestinationListScreen({ navigation, route }) {
   );
 
   const filtering = search.trim() !== '' || selectedCategories.length > 0;
-  const mapHeight = Math.max(280, Math.min(420, windowHeight * 0.42));
+  const mapHeight = Math.max(220, Math.min(360, windowHeight * 0.36));
   const mappedItems = items.filter((item) =>
     item.latitude !== null && item.latitude !== undefined && item.latitude !== ''
     && item.longitude !== null && item.longitude !== undefined && item.longitude !== ''
@@ -129,7 +87,9 @@ export default function DestinationListScreen({ navigation, route }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: background, paddingTop: insets.top + 12 }}>
+    <View style={{ flex: 1, backgroundColor: background }}>
+      <DestinationMap destinations={mappedItems} height={mapHeight} />
+
       <View style={styles.searchWrap}>
         <View style={styles.searchRow}>
           <View style={[styles.search, { backgroundColor: surface, borderColor: border }]}>
@@ -151,7 +111,7 @@ export default function DestinationListScreen({ navigation, route }) {
           </View>
           <Pressable
             style={[
-              styles.filterButton,
+              styles.actionButton,
               { backgroundColor: surface, borderColor: border },
               (filterOpen || selectedCategories.length > 0) && { borderColor: accent },
             ]}
@@ -169,6 +129,14 @@ export default function DestinationListScreen({ navigation, route }) {
               <View style={[styles.filterDot, { backgroundColor: accent }]} />
             ) : null}
           </Pressable>
+          <Pressable
+            style={[styles.actionButton, styles.addButton]}
+            onPress={() => navigation.navigate('DestinationForm')}
+            accessibilityRole="button"
+            accessibilityLabel="Add destination"
+          >
+            <Icon name="plus" size={26} color={colors.ink} />
+          </Pressable>
         </View>
         <Animated.View
           pointerEvents={filterOpen ? 'auto' : 'none'}
@@ -180,7 +148,7 @@ export default function DestinationListScreen({ navigation, route }) {
             {
               maxHeight: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [0, 300] }),
               opacity: filterAnimation,
-              transform: [{ translateY: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
+              transform: [{ translateY: filterAnimation.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
             },
           ]}
         >
@@ -202,35 +170,10 @@ export default function DestinationListScreen({ navigation, route }) {
         </Animated.View>
       </View>
 
-      <View style={styles.resultBar}>
-        <ResultsCount count={items.length} color={text} />
-        {selectedCategories.map((categoryName) => (
-          <FilterChip
-            key={categoryName}
-            label={categoryName}
-            tint={categoryMeta[categoryName].color}
-            onRemove={() => toggleCategory(categoryName)}
-          />
-        ))}
-        {selectedCategories.length > 0 ? (
-          <Pressable
-            onPress={() => setSelectedCategories([])}
-            accessibilityRole="button"
-            accessibilityLabel="Clear all category filters"
-            hitSlop={8}
-          >
-            <Text style={[styles.clearAll, { color: mutedText }]}>Clear all</Text>
-          </Pressable>
-        ) : null}
-      </View>
-
       <FlatList
         data={items}
         keyExtractor={(i) => String(i.id)}
-        contentContainerStyle={{ paddingBottom: 110 }}
-        ListHeaderComponent={mappedItems.length > 0
-          ? <DestinationMap destinations={mappedItems} height={mapHeight} />
-          : null}
+        contentContainerStyle={{ paddingBottom: 32 }}
         renderItem={({ item, index }) => (
           <View style={styles.destinationItem}>
             <AnimatedDestinationCard
@@ -252,15 +195,6 @@ export default function DestinationListScreen({ navigation, route }) {
           </View>
         }
       />
-
-      <Pressable
-        style={[styles.fab, { bottom: 20 }]}
-        onPress={() => navigation.navigate('DestinationForm')}
-        accessibilityRole="button"
-        accessibilityLabel="Add destination"
-      >
-        <Icon name="plus" size={30} color={colors.ink} />
-      </Pressable>
     </View>
   );
 }
@@ -274,9 +208,9 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.line, borderRadius: 25, paddingHorizontal: 14, height: 50,
   },
   searchIcon: { opacity: 0.55 },
-  searchWrap: { position: 'relative', zIndex: 2, marginHorizontal: 20, marginBottom: 10 },
+  searchWrap: { position: 'relative', zIndex: 2, marginHorizontal: 20, marginVertical: 12 },
   input: { flex: 1, fontSize: 16, color: colors.ink, paddingVertical: 0 },
-  filterButton: {
+  actionButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -284,6 +218,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  addButton: { backgroundColor: colors.gold, borderColor: colors.gold },
   filterDot: {
     position: 'absolute',
     top: 9,
@@ -295,7 +230,7 @@ const styles = StyleSheet.create({
   },
   filterDropdown: {
     position: 'absolute',
-    top: 58,
+    bottom: 58,
     right: 0,
     width: 212,
     overflow: 'hidden',
@@ -310,21 +245,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.16,
     shadowRadius: 8,
-  },
-  resultBar: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    minHeight: 30,
-  },
-  resultCount: { fontSize: 14, fontWeight: '700', marginRight: 2 },
-  clearAll: { fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' },
-  fab: {
-    position: 'absolute', right: 20, width: 58, height: 58, borderRadius: 29,
-    backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center',
   },
   emptyTitle: { fontFamily: fonts.serif, fontSize: 20, fontWeight: '700', color: colors.ink, textAlign: 'center' },
   emptyText: { fontSize: 15, color: colors.muted, textAlign: 'center', marginTop: 6 },

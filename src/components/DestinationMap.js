@@ -30,8 +30,8 @@ export default function DestinationMap({ destinations, height }) {
     );
 
   return (
-    <View style={styles.wrap}>
-      <View style={[styles.mapSection, { height }]}>
+    <View style={[styles.wrap, height ? null : styles.fill]}>
+      <View style={[styles.mapSection, height ? { height } : styles.fill]}>
         {mapContent}
       </View>
       {webViewError ? <Text style={[styles.error, { color: text }]}>{webViewError}</Text> : null}
@@ -40,8 +40,9 @@ export default function DestinationMap({ destinations, height }) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { width: '100%', marginBottom: 20 },
-  mapSection: { width: '100%', overflow: 'hidden', borderRadius: 12 },
+  wrap: { width: '100%' },
+  mapSection: { width: '100%', overflow: 'hidden' },
+  fill: { flex: 1 },
   nativeMap: { flex: 1, backgroundColor: 'transparent' },
   webMap: { display: 'block', width: '100%', height: '100%', border: 'none' },
   error: { fontSize: 13, marginTop: 6 },
