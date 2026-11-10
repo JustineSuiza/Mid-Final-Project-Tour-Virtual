@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Animated,
+  Easing,
   Image,
   Modal,
   Platform,
@@ -339,9 +340,7 @@ export default function AccountScreen() {
   };
 
   // Modern UI theme variables
-  const cardBg = surface;
   const inputBg = isDark ? '#192634' : '#F7FAFC';
-  const inputBorder = isDark ? '#2C3E50' : '#E2E8F0';
   const heroGradients = isDark
     ? ['#051820', '#0D3845', '#165C6D']
     : ['#072832', '#0F4C5C', '#1B6A7D'];
@@ -377,7 +376,7 @@ export default function AccountScreen() {
 
         {!loading && mode === 'profile' && (
           <>
-            {/* HERO PASSPORT BANNER */}
+            {/* HERO PASSPORT BANNER (PRESERVED AS REQUESTED) */}
             <LinearGradient
               colors={heroGradients}
               start={{ x: 0, y: 0 }}
@@ -393,7 +392,7 @@ export default function AccountScreen() {
                 <View style={styles.bannerHeaderRow}>
                   <View style={styles.passportBadge}>
                     <Icon name="compass-outline" size={15} color="#F5B942" />
-                    <Text style={styles.passportBadgeText}>CALABARZON PASSPORT</Text>
+                    <Text style={styles.passportBadgeText}>PERSONAL INFORMATION</Text>
                   </View>
 
                   {/* View / Edit Mode Segmented Control */}
@@ -455,7 +454,7 @@ export default function AccountScreen() {
                 </View>
 
                 {/* Avatar Centerpiece */}
-                <View style={styles.avatarSection}>
+                <SlideIn key={profileView} from={isEditingProfile ? 36 : -36} style={styles.avatarSection}>
                   <Pressable
                     onPress={isEditingProfile ? chooseProfilePhoto : undefined}
                     disabled={!isEditingProfile}
@@ -511,22 +510,8 @@ export default function AccountScreen() {
                   )}
                   {photoError ? <Text style={styles.photoErrorText}>{photoError}</Text> : null}
 
-                  {/* Name Presentation / Input */}
-                  {isEditingProfile ? (
-                    <View style={styles.heroNameInputWrap}>
-                      <Text style={styles.heroInputLabel}>FULL NAME *</Text>
-                      <TextInput
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="e.g. Jose Rizal"
-                        placeholderTextColor="rgba(255,255,255,0.55)"
-                        autoCapitalize="words"
-                        textContentType="name"
-                        style={styles.heroNameInput}
-                        accessibilityLabel="Edit Full Name"
-                      />
-                    </View>
-                  ) : (
+                  {/* Name Presentation (View Mode Only) */}
+                  {!isEditingProfile && (
                     <View style={styles.heroNameWrap}>
                       <Text style={styles.heroNameText}>{name || 'Calabarzon Traveler'}</Text>
                       <Icon name="shield-check" size={20} color="#F5B942" style={styles.verifiedIcon} />
@@ -593,521 +578,399 @@ export default function AccountScreen() {
                       </View>
                     </View>
                   )}
-                </View>
+                </SlideIn>
               </View>
             </LinearGradient>
 
-            {/* Editing mode banner cue & prefill button */}
-            {isEditingProfile && (
-              <View style={styles.editBannerContainer}>
-                <View style={[styles.editModeAlert, { backgroundColor: isDark ? '#142938' : '#E8F4F8', borderColor: accent }]}>
-                  <Icon name="pencil-circle" size={22} color={accent} />
-                  <View style={styles.editModeAlertTextWrap}>
-                    <Text style={[styles.editModeAlertTitle, { color: text }]}>Editing Traveler Information</Text>
-                    <Text style={[styles.editModeAlertSub, { color: mutedText }]}>
-                      Fields with <Text style={{ color: '#D64545', fontWeight: 'bold' }}>*</Text> are required for travel verification.
-                    </Text>
+            {/* DOWN SECTION: SIMPLE BUT BEST UI */}
+            <View style={styles.downSectionContainer}>
+              <SlideIn key={profileView} from={isEditingProfile ? 36 : -36} style={styles.downSlide}>
+              {!isEditingProfile ? (
+                /* =================== VIEW MODE (MINIMAL & LUXURY) =================== */
+                <>
+                  {/* GROUP 1: Personal & Location */}
+                  <View style={styles.groupHeaderWrap}>
+                    <Text style={[styles.groupHeaderLabel, { color: mutedText }]}>PERSONAL & LOCATION</Text>
                   </View>
-                  <Pressable
-                    onPress={prefillSampleData}
-                    style={styles.prefillButton}
-                    accessibilityRole="button"
-                    accessibilityLabel="Prefill sample traveler data"
-                  >
-                    <Icon name="auto-fix" size={14} color="#D99A1E" />
-                    <Text style={styles.prefillButtonText}>Sample</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
-
-            {/* DOSSIER SECTION CARDS */}
-            <View style={styles.cardsContainer}>
-              {/* SECTION 1: Personal Identity */}
-              <SectionCard
-                icon="card-account-details-outline"
-                iconColor="#0F4C5C"
-                title="Personal Identity"
-                subtitle="Official traveler credentials"
-                surface={cardBg}
-                border={border}
-                text={text}
-                mutedText={mutedText}
-              >
-                {/* Full Name */}
-                {isEditingProfile ? (
-                  <InputField
-                    label="Full Name *"
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Enter your full legal or display name"
-                    icon="account"
-                    isDark={isDark}
-                    text={text}
-                    border={border}
-                    inputBg={inputBg}
-                    accent={accent}
-                  />
-                ) : (
-                  <InfoRow
-                    icon="account-outline"
-                    label="Full Name"
-                    value={name || 'Not specified'}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                  />
-                )}
-
-                {/* Birth Date */}
-                {isEditingProfile ? (
-                  <Pressable
-                    onPress={() => setBirthDatePickerVisible(true)}
-                    style={styles.tappableField}
-                    accessibilityRole="button"
-                    accessibilityLabel="Select birth date"
-                  >
-                    <Text style={[styles.fieldLabel, { color: text }]}>Date of Birth</Text>
-                    <View style={[styles.tappableInputBox, { backgroundColor: inputBg, borderColor: border }]}>
-                      <Icon name="calendar-month-outline" size={20} color={accent} style={styles.fieldLeadIcon} />
-                      <Text style={[styles.tappableInputText, { color: birthDate ? text : mutedText }]}>
-                        {birthDate ? formatDisplayDate(birthDate) : 'Select your birth date'}
-                      </Text>
-                      <Icon name="chevron-down" size={18} color={mutedText} />
-                    </View>
-                  </Pressable>
-                ) : (
-                  <InfoRow
-                    icon="calendar-month-outline"
-                    label="Date of Birth"
-                    value={birthDate ? formatDisplayDate(birthDate) : 'Not specified'}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                  />
-                )}
-
-                {/* Bio (Preview Mode) */}
-                {!isEditingProfile && (
-                  <InfoRow
-                    icon="text-box-outline"
-                    label="Bio / Notes"
-                    value={aboutMe || 'Not specified'}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                    last
-                  />
-                )}
-              </SectionCard>
-
-              {/* SECTION 2: Residence & Origin */}
-              <SectionCard
-                icon="map-marker-radius-outline"
-                iconColor="#D99A1E"
-                title="Residence & Location"
-                subtitle="Your home base & dispatch origin"
-                surface={cardBg}
-                border={border}
-                text={text}
-                mutedText={mutedText}
-              >
-                {/* Country */}
-                {isEditingProfile ? (
-                  <Pressable
-                    onPress={() => setCountryPickerVisible(true)}
-                    style={styles.tappableField}
-                    accessibilityRole="button"
-                    accessibilityLabel="Select Country"
-                  >
-                    <Text style={[styles.fieldLabel, { color: text }]}>Country / Nationality *</Text>
-                    <View style={[styles.tappableInputBox, { backgroundColor: inputBg, borderColor: border }]}>
-                      <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.countryFlagIcon} />
-                      <Text style={[styles.tappableInputText, { color: text, fontWeight: '600' }]}>
-                        {country.name}
-                      </Text>
-                      <Text style={[styles.countryCodeBadge, { color: mutedText }]}>{country.code}</Text>
-                      <Icon name="chevron-right" size={20} color={mutedText} />
-                    </View>
-                  </Pressable>
-                ) : (
-                  <InfoRow
-                    icon="earth"
-                    label="Country"
-                    value={country.name}
-                    extraComponent={
-                      <View style={styles.countryPreviewWrap}>
-                        <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.countryFlagSmall} />
-                        <Text style={[styles.infoRowText, { color: text, fontWeight: '600' }]}>{country.name}</Text>
-                        <Text style={[styles.countryCodeBadge, { color: mutedText }]}>({country.code})</Text>
-                      </View>
-                    }
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                  />
-                )}
-
-                {/* Street Address */}
-                {isEditingProfile ? (
-                  <InputField
-                    label="Street Address *"
-                    value={streetAddress}
-                    onChangeText={setStreetAddress}
-                    placeholder="e.g. 123 General Trias Ave."
-                    icon="home-city-outline"
-                    isDark={isDark}
-                    text={text}
-                    border={border}
-                    inputBg={inputBg}
-                    accent={accent}
-                  />
-                ) : (
-                  <InfoRow
-                    icon="home-city-outline"
-                    label="Street Address"
-                    value={streetAddress || 'Not specified'}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                  />
-                )}
-
-                {/* City and Province (Side-by-side) */}
-                <View style={styles.rowGrid}>
-                  <View style={styles.gridItem}>
-                    {isEditingProfile ? (
-                      <InputField
-                        label="City / Town *"
-                        value={city}
-                        onChangeText={setCity}
-                        placeholder="e.g. Calamba"
-                        icon="city-variant-outline"
-                        isDark={isDark}
-                        text={text}
-                        border={border}
-                        inputBg={inputBg}
-                        accent={accent}
-                      />
-                    ) : (
-                      <InfoRow
-                        icon="city-variant-outline"
-                        label="City / Town"
-                        value={city || '—'}
-                        text={text}
-                        mutedText={mutedText}
-                        border={border}
-                      />
-                    )}
+                  <View style={[styles.groupedCard, { backgroundColor: surface, borderColor: border }]}>
+                    <SimpleRow
+                      icon="account-outline"
+                      label="Full Name"
+                      value={name || 'Not set'}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      icon="calendar-month-outline"
+                      label="Date of Birth"
+                      value={birthDate ? formatDisplayDate(birthDate) : 'Not set'}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      icon="earth"
+                      label="Country"
+                      value={country.name}
+                      extra={
+                        <View style={styles.inlineFlagWrap}>
+                          <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.inlineFlag} />
+                          <Text style={[styles.simpleRowValue, { color: text }]}>{country.name}</Text>
+                          <Text style={[styles.countryCodeBadge, { color: mutedText }]}>({country.code})</Text>
+                        </View>
+                      }
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      icon="home-city-outline"
+                      label="Street Address"
+                      value={streetAddress || 'Not set'}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      icon="city-variant-outline"
+                      label="City & Province"
+                      value={city && province ? `${city}, ${province}` : (city || province || 'Not set')}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      icon="mailbox-outline"
+                      label="Postal Code"
+                      value={postalCode || 'Not set'}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      last
+                    />
                   </View>
 
-                  <View style={styles.gridItem}>
-                    {isEditingProfile ? (
-                      <InputField
-                        label="Province *"
-                        value={province}
-                        onChangeText={setProvince}
-                        placeholder="e.g. Laguna"
-                        icon="map-outline"
-                        isDark={isDark}
-                        text={text}
-                        border={border}
-                        inputBg={inputBg}
-                        accent={accent}
-                      />
-                    ) : (
-                      <InfoRow
-                        icon="map-outline"
-                        label="Province"
-                        value={province || '—'}
-                        text={text}
-                        mutedText={mutedText}
-                        border={border}
-                      />
-                    )}
+                  {/* GROUP 2: Contact & Socials */}
+                  <View style={styles.groupHeaderWrap}>
+                    <Text style={[styles.groupHeaderLabel, { color: mutedText }]}>CONTACT & CONNECTIVITY</Text>
                   </View>
-                </View>
-
-                {/* Postal Code */}
-                {isEditingProfile ? (
-                  <InputField
-                    label="Postal Code *"
-                    value={postalCode}
-                    onChangeText={setPostalCode}
-                    placeholder="e.g. 4027"
-                    icon="mailbox-outline"
-                    keyboardType="number-pad"
-                    isDark={isDark}
-                    text={text}
-                    border={border}
-                    inputBg={inputBg}
-                    accent={accent}
-                  />
-                ) : (
-                  <InfoRow
-                    icon="mailbox-outline"
-                    label="Postal Code"
-                    value={postalCode || 'Not specified'}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                    last
-                  />
-                )}
-              </SectionCard>
-
-              {/* SECTION 3: Contact & Connectivity */}
-              <SectionCard
-                icon="phone-message-outline"
-                iconColor="#1F8396"
-                title="Contact & Communication"
-                subtitle="Verified channels & reachability"
-                surface={cardBg}
-                border={border}
-                text={text}
-                mutedText={mutedText}
-              >
-                {/* Email Address */}
-                <View style={styles.fieldContainer}>
-                  <Text style={[styles.fieldLabel, { color: text }]}>Account Email Address</Text>
-                  <View style={[styles.readonlyFieldBox, { backgroundColor: inputBg, borderColor: border }]}>
-                    <Icon name="email-check-outline" size={20} color={colors.primary} style={styles.fieldLeadIcon} />
-                    <Text style={[styles.readonlyFieldText, { color: text }]}>{email}</Text>
-                    <View style={styles.verifiedChip}>
-                      <Icon name="check-decagram" size={13} color="#2F7D4F" />
-                      <Text style={styles.verifiedChipText}>Verified</Text>
-                    </View>
+                  <View style={[styles.groupedCard, { backgroundColor: surface, borderColor: border }]}>
+                    <SimpleRow
+                      icon="email-outline"
+                      label="Email"
+                      value={email}
+                      extra={
+                        <View style={styles.inlineEmailWrap}>
+                          <Text style={[styles.simpleRowValue, { color: text }]}>{email}</Text>
+                          <View style={styles.verifiedDot}>
+                            <Icon name="check" size={10} color="#2F7D4F" />
+                          </View>
+                        </View>
+                      }
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      icon="cellphone"
+                      label="Phone"
+                      value={phone ? `${country.code} ${phone}` : 'Not set'}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      IconComponent={FontAwesome6}
+                      icon="x-twitter"
+                      label="X (Twitter)"
+                      value={twitter ? `@${twitter.replace(/^@/, '')}` : 'Not connected'}
+                      isDimmed={!twitter}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      IconComponent={FontAwesome6}
+                      icon="google"
+                      label="Google"
+                      value={google || 'Not connected'}
+                      isDimmed={!google}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                    />
+                    <SimpleRow
+                      IconComponent={FontAwesome6}
+                      icon="facebook"
+                      label="Facebook"
+                      value={facebook || 'Not connected'}
+                      isDimmed={!facebook}
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      last
+                    />
                   </View>
-                  <Text style={[styles.fieldHelperText, { color: mutedText }]}>
-                    Primary key linked to your local traveler session.
-                  </Text>
-                </View>
 
-                {/* Mobile Phone */}
-                {isEditingProfile ? (
-                  <View style={styles.fieldContainer}>
-                    <Text style={[styles.fieldLabel, { color: text }]}>Mobile Phone *</Text>
-                    <View style={[styles.phoneInputRow, { backgroundColor: inputBg, borderColor: border }]}>
-                      <Pressable
-                        onPress={() => setCountryPickerVisible(true)}
-                        style={[styles.phonePrefixButton, { borderRightColor: border }]}
-                        accessibilityRole="button"
-                        accessibilityLabel="Change dial code"
-                      >
-                        <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.phoneFlagIcon} />
-                        <Text style={[styles.phonePrefixText, { color: text }]}>{country.code}</Text>
-                        <Icon name="menu-down" size={16} color={mutedText} />
-                      </Pressable>
-                      <TextInput
-                        value={phone}
-                        onChangeText={setPhone}
-                        placeholder="912 345 6789"
-                        placeholderTextColor={mutedText}
-                        keyboardType="phone-pad"
-                        style={[styles.phoneTextInput, { color: text }]}
-                        accessibilityLabel="Phone Number Input"
-                      />
-                    </View>
-                  </View>
-                ) : (
-                  <InfoRow
-                    icon="cellphone"
-                    label="Mobile Phone"
-                    value={phone ? `${country.code} ${phone}` : 'Not specified'}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                    last
-                  />
-                )}
-              </SectionCard>
-
-              {/* SECTION 4: Traveler Socials */}
-              <SectionCard
-                icon="share-variant-outline"
-                iconColor="#8A3BA3"
-                title="Traveler Socials"
-                subtitle="Connect and share adventures"
-                surface={cardBg}
-                border={border}
-                text={text}
-                mutedText={mutedText}
-              >
-                {/* X / Twitter */}
-                {isEditingProfile ? (
-                  <InputField
-                    label="X (formerly Twitter)"
-                    value={twitter}
-                    onChangeText={setTwitter}
-                    placeholder="@username"
-                    IconComponent={FontAwesome6}
-                    icon="x-twitter"
-                    isDark={isDark}
-                    text={text}
-                    border={border}
-                    inputBg={inputBg}
-                    accent={accent}
-                  />
-                ) : (
-                  <InfoRow
-                    IconComponent={FontAwesome6}
-                    icon="x-twitter"
-                    label="X (Twitter)"
-                    value={twitter ? `@${twitter.replace(/^@/, '')}` : 'Not connected'}
-                    isDimmed={!twitter}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                  />
-                )}
-
-                {/* Google */}
-                {isEditingProfile ? (
-                  <InputField
-                    label="Google Profile"
-                    value={google}
-                    onChangeText={setGoogle}
-                    placeholder="username or profile link"
-                    IconComponent={FontAwesome6}
-                    icon="google"
-                    isDark={isDark}
-                    text={text}
-                    border={border}
-                    inputBg={inputBg}
-                    accent={accent}
-                  />
-                ) : (
-                  <InfoRow
-                    IconComponent={FontAwesome6}
-                    icon="google"
-                    label="Google"
-                    value={google || 'Not connected'}
-                    isDimmed={!google}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                  />
-                )}
-
-                {/* Facebook */}
-                {isEditingProfile ? (
-                  <InputField
-                    label="Facebook Profile"
-                    value={facebook}
-                    onChangeText={setFacebook}
-                    placeholder="facebook.com/username"
-                    IconComponent={FontAwesome6}
-                    icon="facebook"
-                    isDark={isDark}
-                    text={text}
-                    border={border}
-                    inputBg={inputBg}
-                    accent={accent}
-                  />
-                ) : (
-                  <InfoRow
-                    IconComponent={FontAwesome6}
-                    icon="facebook"
-                    label="Facebook"
-                    value={facebook || 'Not connected'}
-                    isDimmed={!facebook}
-                    text={text}
-                    mutedText={mutedText}
-                    border={border}
-                    last
-                  />
-                )}
-              </SectionCard>
-
-              {/* SECTION 5: Account Session & Security */}
-              <SectionCard
-                icon="shield-account-outline"
-                iconColor="#2F7D4F"
-                title="Account Session"
-                subtitle="Device security & session management"
-                surface={cardBg}
-                border={border}
-                text={text}
-                mutedText={mutedText}
-              >
-                <View style={styles.sessionBox}>
-                  <View style={styles.sessionStatusDot} />
-                  <View style={styles.sessionTextWrap}>
-                    <Text style={[styles.sessionStatusTitle, { color: text }]}>Active Traveler Session</Text>
-                    <Text style={[styles.sessionStatusSub, { color: mutedText }]}>
-                      Signed in as {currentUser?.email}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Sign Out Button */}
-                <Pressable
-                  onPress={handleLogout}
-                  style={styles.logoutButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Sign out of account"
-                >
-                  <Icon name="logout-variant" size={18} color="#D64545" />
-                  <Text style={styles.logoutButtonText}>Sign Out from This Device</Text>
-                </Pressable>
-              </SectionCard>
-
-              {/* ACTION BUTTONS (BOTTOM) */}
-              {isEditingProfile ? (
-                <View style={styles.editActionsContainer}>
-                  <Pressable
-                    onPress={cancelEdit}
-                    disabled={isSaving}
-                    style={[styles.cancelButton, { borderColor: border }]}
-                    accessibilityRole="button"
-                    accessibilityLabel="Cancel editing"
-                  >
-                    <Icon name="close" size={18} color={mutedText} />
-                    <Text style={[styles.cancelButtonText, { color: mutedText }]}>Cancel</Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={submit}
-                    disabled={isSaving}
-                    style={styles.saveButtonWrap}
-                    accessibilityRole="button"
-                    accessibilityLabel="Save profile changes"
-                  >
-                    <LinearGradient
-                      colors={['#0F4C5C', '#1D7287']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.saveGradientButton}
+                  {/* Action Buttons in View Mode */}
+                  <View style={styles.viewModeActions}>
+                    <Pressable
+                      onPress={handleLogout}
+                      style={styles.simpleLogoutButton}
+                      accessibilityRole="button"
                     >
-                      {isSaving ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <>
-                          <Icon name="content-save-check" size={18} color="#FFFFFF" />
-                          <Text style={styles.saveGradientButtonText}>Save Changes</Text>
-                        </>
-                      )}
-                    </LinearGradient>
-                  </Pressable>
-                </View>
+                      <Text style={[styles.simpleLogoutText, { color: isDark ? '#FF8A8A' : '#C0392B' }]}>Log out</Text>
+                    </Pressable>
+                  </View>
+                </>
               ) : (
-                <Pressable
-                  onPress={() => setProfileView('edit')}
-                  style={styles.bottomEditPromptButton}
-                  accessibilityRole="button"
-                  accessibilityLabel="Edit your personal information"
-                >
-                  <LinearGradient
-                    colors={['#0F4C5C', '#1A7185']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.bottomEditGradient}
-                  >
-                    <Icon name="account-edit-outline" size={20} color="#FFFFFF" />
-                    <Text style={styles.bottomEditText}>Edit Personal Information</Text>
-                  </LinearGradient>
-                </Pressable>
+                /* =================== EDIT MODE (CLEAN & MINIMAL) =================== */
+                <>
+                  {/* Section 1: Personal & Location (Edit Mode) */}
+                  <View style={styles.editSectionHeaderRow}>
+                    <Text style={[styles.groupHeaderLabel, { color: mutedText, marginBottom: 0 }]}>
+                      PERSONAL & LOCATION
+                    </Text>
+                    <Pressable onPress={prefillSampleData} style={styles.prefillChip} hitSlop={6}>
+                      <Icon name="auto-fix" size={13} color="#D99A1E" />
+                      <Text style={styles.prefillChipText}>Prefill Sample</Text>
+                    </Pressable>
+                  </View>
+
+                  <View style={[styles.groupedCard, { backgroundColor: surface, borderColor: border, padding: 14, gap: 12 }]}>
+                    {/* Full Name */}
+                    <SimpleInputField
+                      label="Full Name *"
+                      value={name}
+                      onChangeText={setName}
+                      placeholder="e.g. Jose Rizal"
+                      icon="account-outline"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+
+                    {/* Date of Birth */}
+                    <Pressable
+                      onPress={() => setBirthDatePickerVisible(true)}
+                      style={styles.simpleFieldWrap}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>DATE OF BIRTH</Text>
+                      <View style={[styles.simpleInputRow, { backgroundColor: inputBg, borderColor: border }]}>
+                        <Icon name="calendar-month-outline" size={18} color={accent} />
+                        <Text style={[styles.simpleInputText, { color: birthDate ? text : mutedText, flex: 1 }]}>
+                          {birthDate ? formatDisplayDate(birthDate) : 'Select birth date'}
+                        </Text>
+                        <Icon name="chevron-down" size={18} color={mutedText} />
+                      </View>
+                    </Pressable>
+
+                    {/* Country */}
+                    <Pressable
+                      onPress={() => setCountryPickerVisible(true)}
+                      style={styles.simpleFieldWrap}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>COUNTRY / NATIONALITY *</Text>
+                      <View style={[styles.simpleInputRow, { backgroundColor: inputBg, borderColor: border }]}>
+                        <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.inputFlag} />
+                        <Text style={[styles.simpleInputText, { color: text, flex: 1, fontWeight: '600' }]}>
+                          {country.name}
+                        </Text>
+                        <Text style={[styles.countryCodeBadge, { color: mutedText }]}>{country.code}</Text>
+                        <Icon name="chevron-right" size={18} color={mutedText} />
+                      </View>
+                    </Pressable>
+
+                    {/* Street Address */}
+                    <SimpleInputField
+                      label="Street Address *"
+                      value={streetAddress}
+                      onChangeText={setStreetAddress}
+                      placeholder="e.g. Real Street, Poblacion"
+                      icon="home-city-outline"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+
+                    {/* City and Province */}
+                    <View style={styles.gridRow}>
+                      <View style={{ flex: 1 }}>
+                        <SimpleInputField
+                          label="City / Town *"
+                          value={city}
+                          onChangeText={setCity}
+                          placeholder="Calamba"
+                          icon="city-variant-outline"
+                          text={text}
+                          mutedText={mutedText}
+                          border={border}
+                          inputBg={inputBg}
+                          accent={accent}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <SimpleInputField
+                          label="Province *"
+                          value={province}
+                          onChangeText={setProvince}
+                          placeholder="Laguna"
+                          icon="map-outline"
+                          text={text}
+                          mutedText={mutedText}
+                          border={border}
+                          inputBg={inputBg}
+                          accent={accent}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Postal Code */}
+                    <SimpleInputField
+                      label="Postal Code *"
+                      value={postalCode}
+                      onChangeText={setPostalCode}
+                      placeholder="4027"
+                      icon="mailbox-outline"
+                      keyboardType="number-pad"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+                  </View>
+
+                  {/* Section 2: Contact & Socials (Edit Mode) */}
+                  <View style={styles.groupHeaderWrap}>
+                    <Text style={[styles.groupHeaderLabel, { color: mutedText }]}>CONTACT & CONNECTIVITY</Text>
+                  </View>
+
+                  <View style={[styles.groupedCard, { backgroundColor: surface, borderColor: border, padding: 14, gap: 12 }]}>
+                    {/* Email (Readonly) */}
+                    <View style={styles.simpleFieldWrap}>
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>ACCOUNT EMAIL (LINKED)</Text>
+                      <View style={[styles.simpleInputRow, { backgroundColor: inputBg, borderColor: border, opacity: 0.85 }]}>
+                        <Icon name="email-check-outline" size={18} color={colors.primary} />
+                        <Text style={[styles.simpleInputText, { color: text, flex: 1 }]}>{email}</Text>
+                        <Icon name="lock-outline" size={16} color={mutedText} />
+                      </View>
+                    </View>
+
+                    {/* Phone */}
+                    <View style={styles.simpleFieldWrap}>
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>MOBILE PHONE *</Text>
+                      <View style={[styles.simpleInputRow, { backgroundColor: inputBg, borderColor: border, paddingLeft: 6 }]}>
+                        <Pressable
+                          onPress={() => setCountryPickerVisible(true)}
+                          style={[styles.phonePrefixPill, { borderRightColor: border }]}
+                          accessibilityRole="button"
+                        >
+                          <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.inputFlagSmall} />
+                          <Text style={[styles.phonePrefixPillText, { color: text }]}>{country.code}</Text>
+                          <Icon name="menu-down" size={14} color={mutedText} />
+                        </Pressable>
+                        <TextInput
+                          value={phone}
+                          onChangeText={setPhone}
+                          placeholder="912 345 6789"
+                          placeholderTextColor={mutedText}
+                          keyboardType="phone-pad"
+                          style={[styles.simpleInputText, { color: text, flex: 1, paddingLeft: 8 }]}
+                        />
+                      </View>
+                    </View>
+
+                    {/* X / Twitter */}
+                    <SimpleInputField
+                      label="X (Twitter)"
+                      value={twitter}
+                      onChangeText={setTwitter}
+                      placeholder="@username"
+                      IconComponent={FontAwesome6}
+                      icon="x-twitter"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+
+                    {/* Google */}
+                    <SimpleInputField
+                      label="Google Profile"
+                      value={google}
+                      onChangeText={setGoogle}
+                      placeholder="username or link"
+                      IconComponent={FontAwesome6}
+                      icon="google"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+
+                    {/* Facebook */}
+                    <SimpleInputField
+                      label="Facebook Profile"
+                      value={facebook}
+                      onChangeText={setFacebook}
+                      placeholder="facebook.com/username"
+                      IconComponent={FontAwesome6}
+                      icon="facebook"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+                  </View>
+
+                  {/* Edit Mode Actions */}
+                  <View style={styles.editModeActions}>
+                    <Pressable
+                      onPress={cancelEdit}
+                      disabled={isSaving}
+                      style={[styles.simpleCancelButton, { borderColor: border }]}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.simpleCancelButtonText, { color: mutedText }]}>Cancel</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={submit}
+                      disabled={isSaving}
+                      style={styles.simpleSaveButton}
+                      accessibilityRole="button"
+                    >
+                      <LinearGradient
+                        colors={['#0F4C5C', '#1D7287']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.simpleSaveGradient}
+                      >
+                        {isSaving ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <>
+                            <Icon name="check" size={18} color="#FFFFFF" />
+                            <Text style={styles.simpleSaveButtonText}>Save Changes</Text>
+                          </>
+                        )}
+                      </LinearGradient>
+                    </Pressable>
+                  </View>
+                </>
               )}
+              </SlideIn>
             </View>
           </>
         )}
@@ -1128,14 +991,14 @@ export default function AccountScreen() {
               <Text style={styles.signInHeroSubtitle}>Official Traveler Passport & Progression</Text>
             </LinearGradient>
 
-            <View style={[styles.signInFormCard, { backgroundColor: cardBg, borderColor: border }]}>
+            <View style={[styles.signInFormCard, { backgroundColor: surface, borderColor: border }]}>
               <Text style={[styles.signInSectionTitle, { color: text }]}>Welcome Traveler</Text>
               <Text style={[styles.signInSectionSub, { color: mutedText }]}>
                 Sign in to save your personal details, progress records, and provincial quiz badges.
               </Text>
 
               {/* Email Input */}
-              <InputField
+              <SimpleInputField
                 label="Email Address"
                 value={email}
                 onChangeText={setEmail}
@@ -1144,15 +1007,15 @@ export default function AccountScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 textContentType="emailAddress"
-                isDark={isDark}
                 text={text}
+                mutedText={mutedText}
                 border={border}
                 inputBg={inputBg}
                 accent={accent}
               />
 
               {/* Password Input */}
-              <InputField
+              <SimpleInputField
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
@@ -1160,8 +1023,8 @@ export default function AccountScreen() {
                 icon="lock-outline"
                 secureTextEntry
                 textContentType="password"
-                isDark={isDark}
                 text={text}
+                mutedText={mutedText}
                 border={border}
                 inputBg={inputBg}
                 accent={accent}
@@ -1242,7 +1105,7 @@ export default function AccountScreen() {
             accessibilityRole="button"
             accessibilityLabel="Close warning"
           />
-          <View style={[styles.warningDialog, { backgroundColor: cardBg, borderColor: border }]}>
+          <View style={[styles.warningDialog, { backgroundColor: surface, borderColor: border }]}>
             <View style={styles.warningDialogHeader}>
               <View style={styles.warningIconCircle}>
                 <Icon name="alert-circle-outline" size={26} color="#D97706" />
@@ -1281,7 +1144,7 @@ export default function AccountScreen() {
             accessibilityRole="button"
             accessibilityLabel="Close country picker"
           />
-          <View style={[styles.countryPickerModal, { backgroundColor: cardBg, borderColor: border }]}>
+          <View style={[styles.countryPickerModal, { backgroundColor: surface, borderColor: border }]}>
             {/* Modal Header */}
             <View style={styles.countryModalHeader}>
               <View>
@@ -1381,42 +1244,15 @@ export default function AccountScreen() {
 }
 
 /* =========================================================================
-   REUSABLE SUB-COMPONENTS
+   CLEAN & MINIMAL SUB-COMPONENTS FOR DOWN SECTION
    ========================================================================= */
 
-function SectionCard({
-  icon,
-  iconColor,
-  title,
-  subtitle,
-  children,
-  surface,
-  border,
-  text,
-  mutedText,
-}) {
-  return (
-    <View style={[styles.sectionCard, { backgroundColor: surface, borderColor: border }]}>
-      <View style={styles.sectionHeaderRow}>
-        <View style={[styles.sectionIconSquircle, { backgroundColor: `${iconColor}18` }]}>
-          <Icon name={icon} size={20} color={iconColor} />
-        </View>
-        <View style={styles.sectionHeaderTextWrap}>
-          <Text style={[styles.sectionTitle, { color: text }]}>{title}</Text>
-          {subtitle ? <Text style={[styles.sectionSubtitle, { color: mutedText }]}>{subtitle}</Text> : null}
-        </View>
-      </View>
-      <View style={styles.sectionBody}>{children}</View>
-    </View>
-  );
-}
-
-function InfoRow({
+function SimpleRow({
   icon,
   IconComponent = Icon,
   label,
   value,
-  extraComponent,
+  extra,
   isDimmed = false,
   text,
   mutedText,
@@ -1424,16 +1260,22 @@ function InfoRow({
   last = false,
 }) {
   return (
-    <View style={[styles.infoRow, !last && { borderBottomColor: border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
-      <View style={styles.infoRowIconSquircle}>
+    <View style={[styles.simpleRowWrap, !last && { borderBottomColor: border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
+      <View style={styles.simpleRowLeft}>
         <IconComponent name={icon} size={18} color={mutedText} />
+        <Text style={[styles.simpleRowLabel, { color: mutedText }]}>{label}</Text>
       </View>
-      <View style={styles.infoRowContent}>
-        <Text style={[styles.infoRowLabel, { color: mutedText }]}>{label.toUpperCase()}</Text>
-        {extraComponent ? (
-          extraComponent
+      <View style={styles.simpleRowRight}>
+        {extra ? (
+          extra
         ) : (
-          <Text style={[styles.infoRowText, { color: isDimmed ? mutedText : text, fontStyle: isDimmed ? 'italic' : 'normal' }]}>
+          <Text
+            style={[
+              styles.simpleRowValue,
+              { color: isDimmed ? mutedText : text, fontStyle: isDimmed ? 'italic' : 'normal' },
+            ]}
+            numberOfLines={1}
+          >
             {value}
           </Text>
         )}
@@ -1442,7 +1284,7 @@ function InfoRow({
   );
 }
 
-function InputField({
+function SimpleInputField({
   label,
   value,
   onChangeText,
@@ -1453,19 +1295,19 @@ function InputField({
   secureTextEntry,
   autoCapitalize,
   textContentType,
-  isDark,
   text,
+  mutedText,
   border,
   inputBg,
   accent,
 }) {
   const [isFocused, setIsFocused] = useState(false);
   return (
-    <View style={styles.fieldContainer}>
-      <Text style={[styles.fieldLabel, { color: text }]}>{label}</Text>
+    <View style={styles.simpleFieldWrap}>
+      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>{label.toUpperCase()}</Text>
       <View
         style={[
-          styles.inputContainer,
+          styles.simpleInputRow,
           {
             backgroundColor: inputBg,
             borderColor: isFocused ? accent : border,
@@ -1476,9 +1318,8 @@ function InputField({
         {icon ? (
           <IconComponent
             name={icon}
-            size={19}
-            color={isFocused ? accent : '#7E8E9B'}
-            style={styles.fieldLeadIcon}
+            size={18}
+            color={isFocused ? accent : mutedText}
           />
         ) : null}
         <TextInput
@@ -1492,7 +1333,7 @@ function InputField({
           textContentType={textContentType}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          style={[styles.inputBox, { color: text }]}
+          style={[styles.simpleInputText, { color: text }]}
           accessibilityLabel={label}
         />
         {value ? (
@@ -1530,6 +1371,31 @@ function CountryFlag({ country, fallback, style }) {
 /* =========================================================================
    STYLESHEET
    ========================================================================= */
+
+function SlideIn({ from, children, style }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 280,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [anim]);
+  return (
+    <Animated.View
+      style={[{
+        width: '100%',
+        opacity: anim,
+        transform: [{
+          translateX: anim.interpolate({ inputRange: [0, 1], outputRange: [from, 0] }),
+        }],
+      }, style]}
+    >
+      {children}
+    </Animated.View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -1569,7 +1435,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
   },
 
-  /* ------------------- HERO BANNER ------------------- */
+  /* ------------------- HERO BANNER (PRESERVED) ------------------- */
   heroBanner: {
     width: '100%',
     paddingHorizontal: 16,
@@ -1930,399 +1796,240 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
 
-  /* Edit Mode Alert Cue */
-  editBannerContainer: {
+  /* ------------------- DOWN SECTION: SIMPLE & BEST UI ------------------- */
+  downSectionContainer: {
     width: '100%',
-    maxWidth: 680,
+    maxWidth: 640,
     alignSelf: 'center',
     paddingHorizontal: 16,
-    marginTop: 16,
-  },
-  editModeAlert: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  editModeAlertTextWrap: {
-    flex: 1,
-  },
-  editModeAlertTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: fonts.sans,
-  },
-  editModeAlertSub: {
-    fontSize: 12,
-    marginTop: 2,
-    fontFamily: fonts.sans,
-  },
-  prefillButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(217, 154, 30, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(217, 154, 30, 0.4)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  prefillButtonText: {
-    color: '#D99A1E',
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: fonts.sans,
-  },
-
-  /* ------------------- SECTION CARDS ------------------- */
-  cardsContainer: {
-    width: '100%',
-    maxWidth: 680,
-    alignSelf: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 20,
     gap: 16,
   },
-  sectionCard: {
-    borderRadius: 20,
+  downSlide: {
+    gap: 16,
+  },
+  groupHeaderWrap: {
+    paddingHorizontal: 4,
+    marginTop: 4,
+  },
+  groupHeaderLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    fontFamily: fonts.sans,
+  },
+  groupedCard: {
+    borderRadius: 18,
     borderWidth: 1,
-    padding: 16,
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.04,
         shadowRadius: 6,
       },
       android: { elevation: 2 },
       default: {},
     }),
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  sectionIconSquircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionHeaderTextWrap: {
-    flex: 1,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: fonts.sans,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    marginTop: 1,
-    fontFamily: fonts.sans,
-  },
-  sectionBody: {
-    gap: 12,
-  },
 
-  /* Info Rows (Preview Mode) */
-  infoRow: {
+  /* Simple Rows (View Mode) */
+  simpleRowWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    gap: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    minHeight: 50,
   },
-  infoRowIconSquircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+  simpleRowLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(127, 127, 127, 0.08)',
+    gap: 12,
+    flexShrink: 0,
   },
-  infoRowContent: {
-    flex: 1,
-    gap: 2,
-  },
-  infoRowLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+  simpleRowLabel: {
+    fontSize: 14,
+    fontWeight: '500',
     fontFamily: fonts.sans,
   },
-  infoRowText: {
-    fontSize: 15,
+  simpleRowRight: {
+    flex: 1,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginLeft: 16,
+  },
+  simpleRowValue: {
+    fontSize: 14,
     fontWeight: '600',
     fontFamily: fonts.sans,
+    textAlign: 'right',
   },
-  countryPreviewWrap: {
+  inlineFlagWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-
-  /* Form Fields (Edit Mode) */
-  fieldContainer: {
-    gap: 6,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    fontFamily: fonts.sans,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    minHeight: 46,
-    gap: 10,
-  },
-  fieldLeadIcon: {
-    marginRight: 2,
-  },
-  inputBox: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: fonts.sans,
-    paddingVertical: 8,
-  },
-  fieldHelperText: {
-    fontSize: 11,
-    marginTop: 2,
-    paddingHorizontal: 4,
-    fontFamily: fonts.sans,
-  },
-
-  /* Tappable Field Box (Country / Date) */
-  tappableField: {
-    gap: 6,
-  },
-  tappableInputBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    minHeight: 46,
-    gap: 10,
-  },
-  tappableInputText: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: fonts.sans,
-  },
-  countryCodeBadge: {
-    fontSize: 13,
-    fontWeight: '600',
-    fontFamily: fonts.sans,
-  },
-  countryFlagIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-  },
-  countryFlagSmall: {
+  inlineFlag: {
     width: 20,
     height: 20,
     borderRadius: 10,
   },
-
-  /* Grid Layout for City / Province */
-  rowGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  gridItem: {
-    flex: 1,
-    minWidth: 0,
-  },
-
-  /* Readonly Account Email */
-  readonlyFieldBox: {
+  inlineEmailWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    minHeight: 46,
-    gap: 10,
+    gap: 6,
   },
-  readonlyFieldText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
+  verifiedDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(47, 125, 79, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* View Mode Action Buttons */
+  viewModeActions: {
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 20,
+  },
+  simpleLogoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    borderRadius: 99,
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+  },
+  simpleLogoutText: {
+    fontSize: 13,
+    fontWeight: '700',
     fontFamily: fonts.sans,
   },
-  verifiedChip: {
+
+  /* Edit Mode Fields */
+  editSectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(47, 125, 79, 0.12)',
-    paddingHorizontal: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  prefillChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(217, 154, 30, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(217, 154, 30, 0.4)',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  verifiedChipText: {
-    color: '#2F7D4F',
+  prefillChipText: {
+    color: '#D99A1E',
     fontSize: 11,
     fontWeight: '700',
     fontFamily: fonts.sans,
   },
-
-  /* Phone Input */
-  phoneInputRow: {
+  simpleFieldWrap: {
+    gap: 4,
+  },
+  fieldSmallLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    paddingHorizontal: 2,
+    fontFamily: fonts.sans,
+  },
+  simpleInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderRadius: 12,
-    minHeight: 46,
-    overflow: 'hidden',
-  },
-  phonePrefixButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
     paddingHorizontal: 12,
-    height: 46,
-    borderRightWidth: 1,
+    minHeight: 44,
+    gap: 10,
   },
-  phoneFlagIcon: {
+  simpleInputText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: fonts.sans,
+    paddingVertical: 6,
+  },
+  gridRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  inputFlag: {
     width: 22,
     height: 22,
     borderRadius: 11,
   },
-  phonePrefixText: {
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: fonts.sans,
+  inputFlagSmall: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
   },
-  phoneTextInput: {
-    flex: 1,
-    fontSize: 15,
-    fontFamily: fonts.sans,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-
-  /* Session & Logout */
-  sessionBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 4,
-  },
-  sessionStatusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#2F7D4F',
-  },
-  sessionTextWrap: {
-    flex: 1,
-  },
-  sessionStatusTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    fontFamily: fonts.sans,
-  },
-  sessionStatusSub: {
+  countryCodeBadge: {
     fontSize: 12,
-    marginTop: 1,
+    fontWeight: '600',
     fontFamily: fonts.sans,
   },
-  logoutButton: {
+  phonePrefixPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(214, 69, 69, 0.35)',
-    backgroundColor: 'rgba(214, 69, 69, 0.06)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginTop: 8,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRightWidth: 1,
   },
-  logoutButtonText: {
-    color: '#D64545',
-    fontSize: 14,
+  phonePrefixPillText: {
+    fontSize: 13,
     fontWeight: '700',
     fontFamily: fonts.sans,
   },
 
-  /* Bottom Actions (Edit Mode) */
-  editActionsContainer: {
+  /* Edit Mode Action Buttons */
+  editModeActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginTop: 8,
     marginBottom: 20,
   },
-  cancelButton: {
+  simpleCancelButton: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
     borderWidth: 1.5,
-    borderRadius: 14,
-    minHeight: 50,
+    borderRadius: 12,
+    minHeight: 48,
   },
-  cancelButtonText: {
-    fontSize: 15,
+  simpleCancelButtonText: {
+    fontSize: 14,
     fontWeight: '700',
     fontFamily: fonts.sans,
   },
-  saveButtonWrap: {
+  simpleSaveButton: {
     flex: 2,
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: 'hidden',
   },
-  saveGradientButton: {
+  simpleSaveGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    minHeight: 50,
+    minHeight: 48,
     paddingHorizontal: 16,
   },
-  saveGradientButtonText: {
+  simpleSaveButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '700',
-    fontFamily: fonts.sans,
-  },
-
-  /* Bottom Actions (Preview Mode) */
-  bottomEditPromptButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginTop: 6,
-    marginBottom: 20,
-    ...Platform.select({
-      ios: { shadowColor: '#0F4C5C', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8 },
-      android: { elevation: 4 },
-      default: {},
-    }),
-  },
-  bottomEditGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-  },
-  bottomEditText: {
-    color: '#FFFFFF',
-    fontSize: 16,
     fontWeight: '700',
     fontFamily: fonts.sans,
   },
@@ -2373,7 +2080,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     padding: 20,
-    gap: 16,
+    gap: 14,
   },
   signInSectionTitle: {
     fontSize: 20,
@@ -2384,12 +2091,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     fontFamily: fonts.sans,
-    marginTop: -8,
+    marginTop: -6,
+    marginBottom: 4,
   },
   signInSubmitButton: {
     borderRadius: 14,
     overflow: 'hidden',
-    marginTop: 4,
+    marginTop: 6,
   },
   signInGradientButton: {
     flexDirection: 'row',
