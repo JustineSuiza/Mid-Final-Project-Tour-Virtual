@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
-import { SEED_DESTINATIONS } from './seed';
+import { LEGACY_QUIZ_QUESTIONS, SEED_DESTINATIONS } from './seed';
 import { PASS_MARK } from '../theme';
+import { buildDashboard } from '../utils/progressStats';
 
 let dbPromise = null;
 function getDb() {
@@ -87,6 +88,50 @@ export async function initDatabase() {
         WHERE name = ? AND (latitude IS NULL OR longitude IS NULL)`,
       [d.latitude, d.longitude, d.name]
     );
+  }
+
+  await syncLegacyQuizzes(db);
+}
+
+function sameQuiz(existing, seedQuiz) {
+  if (existing.length !== seedQuiz.length) return false;
+  return existing.every((q, i) => {
+    const seed = seedQuiz[i];
+    return q.question === seed.question
+      && q.answerIndex === seed.answerIndex
+      && q.options === JSON.stringify(seed.options);
+  });
+}
+
+async function syncLegacyQuizzes(db) {
+  for (const dest of SEED_DESTINATIONS) {
+    const legacy = LEGACY_QUIZ_QUESTIONS[dest.name];
+    if (!legacy) continue;
+    const row = await db.getFirstAsync(
+      'SELECT id FROM destinations WHERE name = ? ORDER BY id LIMIT 1',
+      [dest.name]
+    );
+    if (!row) continue;
+    const existing = await db.getAllAsync(
+      'SELECT question, options, answerIndex FROM quiz_questions WHERE destinationId = ? ORDER BY id',
+      [row.id]
+    );
+    if (sameQuiz(existing, dest.quiz)) continue;
+    const legacyMatch = existing.length === legacy.length
+      && existing.every((q, i) => q.question === legacy[i]);
+    if (!legacyMatch) continue;
+    await db.withTransactionAsync(async () => {
+      await db.runAsync('DELETE FROM quiz_attempts WHERE destinationId = ?', [row.id]);
+      await db.runAsync('DELETE FROM progress WHERE destinationId = ?', [row.id]);
+      await db.runAsync('DELETE FROM quiz_questions WHERE destinationId = ?', [row.id]);
+      for (const q of dest.quiz) {
+        await db.runAsync(
+          `INSERT INTO quiz_questions (destinationId, question, options, answerIndex, explanation)
+           VALUES (?, ?, ?, ?, ?)`,
+          [row.id, q.question, JSON.stringify(q.options), q.answerIndex, q.explanation]
+        );
+      }
+    });
   }
 }
 
@@ -301,4 +346,23 @@ export async function getProgressSummary() {
     ? scored.reduce((sum, d) => sum + d.bestScore / d.totalQuestions, 0) / scored.length
     : null;
   return { total: destinations.length, completed, avgBest, destinations, recent };
+}
+
+export async function getProgressDashboard() {
+  const db = await getDb();
+  const destinations = await db.getAllAsync(
+    'SELECT id, name, category FROM destinations ORDER BY id'
+  );
+  const attempts = await db.getAllAsync(
+    `SELECT a.destinationId, a.score, a.total, d.category
+       FROM quiz_attempts a
+       JOIN destinations d ON d.id = a.destinationId
+      ORDER BY a.id ASC`
+  );
+  return buildDashboard(destinations, attempts);
+}
+
+export async function resetProgress() {
+  const db = await getDb();
+  await db.execAsync('DELETE FROM quiz_attempts; DELETE FROM progress;');
 }

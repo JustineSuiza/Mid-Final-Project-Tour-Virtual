@@ -15,9 +15,11 @@ export const SEED_DESTINATIONS = [
     significance:
       'The shrine marks the birthplace of Philippine independence. It is the focus of Independence Day celebrations every June 12 and reminds visitors of the sacrifices of the revolutionary generation.',
     quiz: [
-      { question: 'On what date was Philippine independence proclaimed at the Aguinaldo Shrine?', options: ['June 12, 1898', 'July 4, 1946', 'December 30, 1896', 'August 23, 1896'], answerIndex: 0, explanation: 'Independence was proclaimed on June 12, 1898, which is why Independence Day is celebrated on that date.' },
-      { question: 'In which province is the Aguinaldo Shrine located?', options: ['Laguna', 'Cavite', 'Batangas', 'Quezon'], answerIndex: 1, explanation: 'The shrine is in Kawit, Cavite.' },
-      { question: 'Who proclaimed independence from this house?', options: ['José Rizal', 'Andrés Bonifacio', 'Emilio Aguinaldo', 'Apolinario Mabini'], answerIndex: 2, explanation: 'Emilio Aguinaldo made the proclamation from his family home.' },
+      { question: 'On what date was Philippine independence proclaimed at the Aguinaldo Shrine?', options: ['June 12, 1898', 'July 4, 1946', 'December 30, 1896', 'August 23, 1896'], answerIndex: 0, explanation: 'Independence was proclaimed on June 12, 1898.' },
+      { question: 'In which Cavite town is the shrine located?', options: ['Imus', 'Kawit', 'Silang', 'Naic'], answerIndex: 1, explanation: 'The shrine is in Kawit, Cavite.' },
+      { question: 'Who proclaimed independence from the shrine’s balcony?', options: ['Andres Bonifacio', 'Apolinario Mabini', 'Emilio Aguinaldo', 'Antonio Luna'], answerIndex: 2, explanation: 'Emilio Aguinaldo proclaimed independence from the balcony.' },
+      { question: 'Which tune was first played during the proclamation?', options: ['Bayan Ko', 'Dahil Sa Iyo', 'Sampaguita', 'Marcha Filipina Magdalo'], answerIndex: 3, explanation: 'Marcha Filipina Magdalo, later the national anthem, was played.' },
+      { question: 'Who composed the music of the national anthem?', options: ['Julian Felipe', 'José Palma', 'Nicanor Abelardo', 'Francisco Santiago'], answerIndex: 0, explanation: 'Julian Felipe composed the music.' },
     ],
   },
   {
@@ -34,9 +36,11 @@ export const SEED_DESTINATIONS = [
     significance:
       'Rizal is the Philippines’ national hero, and his writings helped awaken national consciousness. The shrine lets students connect his ideas to the town and home that shaped him.',
     quiz: [
-      { question: 'In which town was José Rizal born?', options: ['Calamba', 'Kawit', 'Lucban', 'Taal'], answerIndex: 0, explanation: 'Rizal was born in Calamba, Laguna.' },
-      { question: 'Which of these novels did Rizal write?', options: ['Florante at Laura', 'Noli Me Tangere', 'Banaag at Sikat', 'Ibong Adarna'], answerIndex: 1, explanation: 'Noli Me Tangere was published in 1887.' },
-      { question: 'In what year was Rizal born?', options: ['1851', '1861', '1871', '1881'], answerIndex: 1, explanation: 'He was born on June 19, 1861.' },
+      { question: 'When was José Rizal born?', options: ['December 30, 1861', 'June 19, 1861', 'June 12, 1861', 'June 19, 1896'], answerIndex: 1, explanation: 'José Rizal was born on June 19, 1861.' },
+      { question: 'Which Laguna town is his birthplace?', options: ['Calamba', 'Pila', 'Los Baños', 'Liliw'], answerIndex: 0, explanation: 'He was born in Calamba, Laguna.' },
+      { question: 'Which novels did Rizal write?', options: ['Florante at Laura', 'Ibong Adarna', 'Noli Me Tangere and El Filibusterismo', 'Banaag at Sikat'], answerIndex: 2, explanation: 'He wrote Noli Me Tangere and El Filibusterismo.' },
+      { question: 'What was Rizal’s profession?', options: ['Architect', 'Ophthalmologist', 'Lawyer', 'Engineer'], answerIndex: 1, explanation: 'Rizal was an ophthalmologist.' },
+      { question: 'Where was Rizal executed in 1896?', options: ['Bagumbayan', 'Corregidor', 'Fort Bonifacio', 'Cavite Beach'], answerIndex: 0, explanation: 'He was executed at Bagumbayan, now Rizal Park.' },
     ],
   },
   {
@@ -53,9 +57,11 @@ export const SEED_DESTINATIONS = [
     significance:
       'Pila shows how a Spanish colonial town was organized and how heritage buildings can remain part of everyday life. It is often visited by students of architecture and local history.',
     quiz: [
-      { question: 'In which province is Pila located?', options: ['Cavite', 'Rizal', 'Laguna', 'Batangas'], answerIndex: 2, explanation: 'Pila is a town in Laguna.' },
-      { question: 'Which period of Philippine history do Pila’s old buildings mostly reflect?', options: ['Spanish colonial period', 'Japanese occupation', 'Pre-colonial period', 'Martial law era'], answerIndex: 0, explanation: 'The town plan and heritage houses reflect the Spanish colonial period.' },
-      { question: 'What anchors the town plaza?', options: ['A market', 'A church', 'A lighthouse', 'A fort'], answerIndex: 1, explanation: 'Colonial towns were centered on the church and plaza.' },
+      { question: 'In which province is Pila located?', options: ['Laguna', 'Batangas', 'Quezon', 'Cavite'], answerIndex: 0, explanation: 'Pila is a town in Laguna.' },
+      { question: 'Who is the patron saint of Pila’s church?', options: ['San Isidro', 'San Antonio de Padua', 'San Pedro', 'San Roque'], answerIndex: 1, explanation: 'The church is dedicated to San Antonio de Padua.' },
+      { question: 'What does “bahay na bato” mean?', options: ['House of wood', 'House on stilts', 'House of stone', 'House of bamboo'], answerIndex: 2, explanation: 'Bahay na bato means house of stone.' },
+      { question: 'What is the upper floor of a bahay na bato usually made of?', options: ['Concrete', 'Glass', 'Steel', 'Wood'], answerIndex: 3, explanation: 'The upper floor was usually wood.' },
+      { question: 'What stood at the center of Spanish-era towns?', options: ['Lighthouse', 'Factory', 'Plaza and church', 'Harbor'], answerIndex: 2, explanation: 'Spanish-era towns were centered on the plaza and church.' },
     ],
   },
   {
@@ -72,9 +78,11 @@ export const SEED_DESTINATIONS = [
     significance:
       'Makiling joins science and folklore: it protects native plants and animals while keeping a Filipino legend alive. Students can study ecology and oral tradition in the same place.',
     quiz: [
-      { question: 'Who is the legendary guardian of Mount Makiling?', options: ['Maria Clara', 'Maria Makiling', 'Maria Cristina', 'Maria Sinukuan'], answerIndex: 1, explanation: 'Maria Makiling is the diwata said to protect the mountain.' },
-      { question: 'Which university manages the Makiling Forest Reserve?', options: ['UP Los Baños', 'De La Salle University', 'Ateneo de Manila', 'Batangas State University'], answerIndex: 0, explanation: 'UP Los Baños manages the reserve.' },
-      { question: 'In which province is Mount Makiling?', options: ['Laguna', 'Quezon', 'Rizal', 'Cavite'], answerIndex: 0, explanation: 'The reserve is in Los Baños, Laguna.' },
+      { question: 'In which province is Mount Makiling mainly located?', options: ['Cavite', 'Laguna', 'Rizal', 'Bataan'], answerIndex: 1, explanation: 'Mount Makiling is mainly in Laguna.' },
+      { question: 'According to legend, who guards the mountain?', options: ['Maria Makiling', 'Maria Clara', 'Mariang Sinukuan', 'Malakas'], answerIndex: 0, explanation: 'Maria Makiling is said to guard the mountain.' },
+      { question: 'Which university manages the forest reserve?', options: ['UP Diliman', 'UP Los Baños', 'Ateneo', 'UST'], answerIndex: 1, explanation: 'UP Los Baños manages the reserve.' },
+      { question: 'What kind of mountain is Mount Makiling?', options: ['Limestone hill', 'Sand dune', 'Potentially active volcano', 'Coral atoll'], answerIndex: 2, explanation: 'Mount Makiling is a potentially active volcano.' },
+      { question: 'Which feature is a popular attraction in the reserve?', options: ['Chocolate Hills', 'Rice terraces', 'Underground river', 'Mudspring'], answerIndex: 3, explanation: 'The Mudspring is a popular stop in the reserve.' },
     ],
   },
   {
@@ -91,9 +99,11 @@ export const SEED_DESTINATIONS = [
     significance:
       'Taal preserves colonial architecture and local crafts in one walkable place. It is also tied to the story of the first Philippine flag through Marcela Agoncillo.',
     quiz: [
-      { question: 'The basilica in Taal is dedicated to which saint?', options: ['St. Martin of Tours', 'St. Francis of Assisi', 'St. Anthony of Padua', 'St. Isidore'], answerIndex: 0, explanation: 'It is the Basilica of St. Martin of Tours.' },
-      { question: 'Taal is well known for which local craft?', options: ['Kiping', 'Balisong', 'Salakot', 'Banig'], answerIndex: 1, explanation: 'Balisong, the folding knife, is a famous Batangas craft.' },
-      { question: 'Marcela Agoncillo, linked to sewing the first Philippine flag, came from which town?', options: ['Taal', 'Pila', 'Antipolo', 'Lucban'], answerIndex: 0, explanation: 'Marcela Agoncillo was from Taal, Batangas.' },
+      { question: 'In which province is Taal located?', options: ['Laguna', 'Batangas', 'Cavite', 'Rizal'], answerIndex: 1, explanation: 'Taal is in Batangas.' },
+      { question: 'The Taal Basilica honors which saint?', options: ['St. Anthony', 'St. Peter', 'St. Martin of Tours', 'St. Joseph'], answerIndex: 2, explanation: 'The basilica honors St. Martin of Tours.' },
+      { question: 'Which traditional blade is Taal famous for?', options: ['Bolo', 'Kris', 'Kampilan', 'Balisong'], answerIndex: 3, explanation: 'Taal is famous for the balisong.' },
+      { question: 'Which cured meat is a Taal specialty?', options: ['Longganisa Lucban', 'Tapang Taal', 'Tocino', 'Tuyo'], answerIndex: 1, explanation: 'Tapang Taal is a local specialty.' },
+      { question: 'Who sewed the first Philippine flag and was born in Taal?', options: ['Marcela Agoncillo', 'Gabriela Silang', 'Melchora Aquino', 'Teresa Magbanua'], answerIndex: 0, explanation: 'Marcela Agoncillo was born in Taal and sewed the first flag.' },
     ],
   },
   {
@@ -110,9 +120,11 @@ export const SEED_DESTINATIONS = [
     significance:
       'Taal teaches how communities live with natural hazards. Its history shapes settlement, farming, and disaster preparedness around the lake.',
     quiz: [
-      { question: 'Taal Volcano sits in the middle of which body of water?', options: ['Laguna de Bay', 'Taal Lake', 'Manila Bay', 'Lake Lanao'], answerIndex: 1, explanation: 'The volcano island is in Taal Lake.' },
-      { question: 'Which agency monitors volcanoes in the Philippines?', options: ['PAGASA', 'NDRRMC', 'PHIVOLCS', 'DENR'], answerIndex: 2, explanation: 'PHIVOLCS monitors volcanic and seismic activity.' },
-      { question: 'In which year did the eruption that forced mass evacuations occur?', options: ['2010', '2015', '2020', '2023'], answerIndex: 2, explanation: 'Taal erupted in January 2020.' },
+      { question: 'Taal Volcano sits in the middle of which body of water?', options: ['Laguna de Bay', 'Taal Lake', 'Manila Bay', 'Lake Lanao'], answerIndex: 1, explanation: 'The volcano sits in Taal Lake.' },
+      { question: 'On which island is the volcano located?', options: ['Corregidor', 'Fortune Island', 'Volcano Island', 'Verde Island'], answerIndex: 2, explanation: 'The cone is on Volcano Island.' },
+      { question: 'Which agency monitors Philippine volcanoes?', options: ['PAGASA', 'PHIVOLCS', 'NDRRMC', 'DOST-ASTI'], answerIndex: 1, explanation: 'PHIVOLCS monitors Philippine volcanoes.' },
+      { question: 'In which year did Taal have a major eruption near Tagaytay?', options: ['2020', '2010', '2015', '2005'], answerIndex: 0, explanation: 'A major eruption happened in 2020.' },
+      { question: 'Taal is often called one of the world’s ___ active volcanoes.', options: ['tallest', 'smallest', 'oldest', 'widest'], answerIndex: 1, explanation: 'Taal is often called one of the world’s smallest active volcanoes.' },
     ],
   },
   {
@@ -129,9 +141,11 @@ export const SEED_DESTINATIONS = [
     significance:
       'Pahiyas shows how faith, farming, and craft meet in Filipino community life. Lucban is also known for its longganisa and pancit habhab.',
     quiz: [
-      { question: 'On what date is the Pahiyas Festival celebrated?', options: ['January 9', 'May 15', 'June 12', 'December 25'], answerIndex: 1, explanation: 'Pahiyas is held every May 15.' },
-      { question: 'What colorful rice wafer decorates the houses?', options: ['Kiping', 'Bibingka', 'Puto', 'Turon'], answerIndex: 0, explanation: 'Kiping is the leaf-shaped rice wafer that is a symbol of the festival.' },
-      { question: 'Whom does the festival honor?', options: ['San Isidro Labrador', 'Santo Niño', 'San Pedro', 'Santa Clara'], answerIndex: 0, explanation: 'Pahiyas honors San Isidro Labrador, patron saint of farmers.' },
+      { question: 'In which month is the Pahiyas Festival held?', options: ['April', 'May', 'June', 'July'], answerIndex: 1, explanation: 'Pahiyas is held in May.' },
+      { question: 'Which saint does the festival honor?', options: ['San Isidro Labrador', 'Santo Niño', 'San Pedro', 'San Jose'], answerIndex: 0, explanation: 'The festival honors San Isidro Labrador.' },
+      { question: 'What are the colorful rice wafers that decorate the houses called?', options: ['Puto', 'Kiping', 'Bibingka', 'Turon'], answerIndex: 1, explanation: 'The rice wafers are called kiping.' },
+      { question: 'Which noodle dish is Lucban famous for?', options: ['Pancit Canton', 'Pancit Malabon', 'Pancit Habhab', 'Pancit Palabok'], answerIndex: 2, explanation: 'Lucban is famous for pancit habhab.' },
+      { question: 'Lucban belongs to which province?', options: ['Batangas', 'Laguna', 'Cavite', 'Quezon'], answerIndex: 3, explanation: 'Lucban is in Quezon.' },
     ],
   },
   {
@@ -148,9 +162,56 @@ export const SEED_DESTINATIONS = [
     significance:
       'The cathedral is a living center of devotion and tradition. Pilgrimage season shows how faith shapes local culture, food, and community life.',
     quiz: [
-      { question: 'Which image is venerated at Antipolo Cathedral?', options: ['Our Lady of Peace and Good Voyage', 'Our Lady of Manaoag', 'Santo Niño de Cebu', 'Black Nazarene'], answerIndex: 0, explanation: 'Our Lady of Peace and Good Voyage is the patroness of Antipolo.' },
-      { question: 'In which province is Antipolo?', options: ['Rizal', 'Cavite', 'Laguna', 'Batangas'], answerIndex: 0, explanation: 'Antipolo is the capital of Rizal province.' },
-      { question: 'Which month is the traditional main pilgrimage season?', options: ['March', 'May', 'August', 'November'], answerIndex: 1, explanation: 'Many pilgrims travel to Antipolo in May.' },
+      { question: 'Which image is venerated at Antipolo Cathedral?', options: ['Black Nazarene', 'Our Lady of Peace and Good Voyage', 'Santo Niño de Cebu', 'Our Lady of Manaoag'], answerIndex: 1, explanation: 'The cathedral venerates Our Lady of Peace and Good Voyage.' },
+      { question: 'In which province is Antipolo located?', options: ['Laguna', 'Cavite', 'Rizal', 'Quezon'], answerIndex: 2, explanation: 'Antipolo is in Rizal.' },
+      { question: 'What is the pilgrims’ walk to Antipolo called?', options: ['Simbang Gabi', 'Salubong', 'Panata', 'Alay Lakad'], answerIndex: 3, explanation: 'The pilgrimage walk is called Alay Lakad.' },
+      { question: 'From which country did the image arrive in 1626?', options: ['Mexico', 'Spain', 'Portugal', 'China'], answerIndex: 0, explanation: 'The image arrived from Mexico in 1626.' },
+      { question: 'Which treat is Antipolo famous for?', options: ['Buko pie', 'Suman and kasoy', 'Pastillas', 'Lambanog'], answerIndex: 1, explanation: 'Antipolo is famous for suman and kasoy.' },
     ],
   },
 ];
+
+// Question text from the previous 3-item starter quizzes. Used once to swap those
+// records for the 5-question set without touching a quiz someone has edited.
+export const LEGACY_QUIZ_QUESTIONS = {
+  'Aguinaldo Shrine': [
+    'On what date was Philippine independence proclaimed at the Aguinaldo Shrine?',
+    'In which province is the Aguinaldo Shrine located?',
+    'Who proclaimed independence from this house?',
+  ],
+  'Rizal Shrine, Calamba': [
+    'In which town was José Rizal born?',
+    'Which of these novels did Rizal write?',
+    'In what year was Rizal born?',
+  ],
+  'Pila Historic Town Center': [
+    'In which province is Pila located?',
+    'Which period of Philippine history do Pila’s old buildings mostly reflect?',
+    'What anchors the town plaza?',
+  ],
+  'Mount Makiling Forest Reserve': [
+    'Who is the legendary guardian of Mount Makiling?',
+    'Which university manages the Makiling Forest Reserve?',
+    'In which province is Mount Makiling?',
+  ],
+  'Taal Heritage Town': [
+    'The basilica in Taal is dedicated to which saint?',
+    'Taal is well known for which local craft?',
+    'Marcela Agoncillo, linked to sewing the first Philippine flag, came from which town?',
+  ],
+  'Taal Volcano': [
+    'Taal Volcano sits in the middle of which body of water?',
+    'Which agency monitors volcanoes in the Philippines?',
+    'In which year did the eruption that forced mass evacuations occur?',
+  ],
+  'Lucban and the Pahiyas Festival': [
+    'On what date is the Pahiyas Festival celebrated?',
+    'What colorful rice wafer decorates the houses?',
+    'Whom does the festival honor?',
+  ],
+  'Antipolo Cathedral': [
+    'Which image is venerated at Antipolo Cathedral?',
+    'In which province is Antipolo?',
+    'Which month is the traditional main pilgrimage season?',
+  ],
+};

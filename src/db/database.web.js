@@ -1,8 +1,9 @@
 // Browser version of the database layer. Metro picks this file instead of database.js on web,
 // because expo-sqlite is not reliable in browsers. It exposes exactly the same functions and
 // keeps the data in IndexedDB (large quota, so tour photos fit), private to this browser.
-import { SEED_DESTINATIONS } from './seed';
+import { LEGACY_QUIZ_QUESTIONS, SEED_DESTINATIONS } from './seed';
 import { PASS_MARK } from '../theme';
+import { buildDashboard } from '../utils/progressStats';
 
 const DB_NAME = 'calabarzon_tour';
 const STORE = 'kv';
@@ -83,8 +84,20 @@ export async function initDatabase() {
     return;
   }
 
-  // Seed records saved before map coordinates existed get them once here.
   let changed = false;
+  if (!Array.isArray(state.attempts)) {
+    state.attempts = [];
+    changed = true;
+  }
+  if (!state.nextId) {
+    state.nextId = { destination: 1, question: 1, attempt: 1 };
+    changed = true;
+  } else if (!state.nextId.attempt) {
+    state.nextId.attempt = state.attempts.reduce((max, attempt) => Math.max(max, attempt.id || 0), 0) + 1;
+    changed = true;
+  }
+
+  // Seed records saved before map coordinates existed get them once here.
   for (const d of SEED_DESTINATIONS) {
     if (d.latitude == null || d.longitude == null) continue;
     const saved = state.destinations.find((x) => x.name === d.name);
@@ -270,4 +283,27 @@ export async function getProgressSummary() {
     completed: destinations.filter((d) => d.completed === 1).length,
     avgBest, destinations, recent,
   };
+}
+
+export async function getProgressDashboard() {
+  const destinations = state.destinations
+    .map((d) => ({ id: d.id, name: d.name, category: d.category }))
+    .sort((a, b) => a.id - b.id);
+  const categories = new Map(destinations.map((d) => [d.id, d.category]));
+  const attempts = (state.attempts || [])
+    .filter((attempt) => categories.has(attempt.destinationId))
+    .sort((a, b) => a.id - b.id)
+    .map((attempt) => ({
+      destinationId: attempt.destinationId,
+      score: attempt.score,
+      total: attempt.total,
+      category: categories.get(attempt.destinationId),
+    }));
+  return buildDashboard(destinations, attempts);
+}
+
+export async function resetProgress() {
+  state.attempts = [];
+  state.progress = {};
+  await save();
 }

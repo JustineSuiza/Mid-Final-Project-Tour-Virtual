@@ -7,6 +7,18 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider, useAppTheme } from './src/ThemeContext';
 import { AccountProvider } from './src/AccountContext';
 import { MAX_WIDTH, colors } from './src/theme';
+import { markProgressFonts } from './src/utils/progressStats';
+
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  markProgressFonts('web');
+  if (!document.getElementById('plus-jakarta-sans')) {
+    const link = document.createElement('link');
+    link.id = 'plus-jakarta-sans';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap';
+    document.head.appendChild(link);
+  }
+}
 
 function AppContent() {
   const { isDark, background } = useAppTheme();

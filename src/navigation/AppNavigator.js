@@ -364,7 +364,7 @@ export default function AppNavigator() {
         <Stack.Screen name="DestinationForm" component={DestinationFormScreen} />
         <Stack.Screen name="VirtualTour" component={VirtualTourScreen} options={{ title: 'Virtual tour' }} />
         <Stack.Screen name="Tour360" component={Tour360Screen} options={{ title: '360° tour' }} />
-        <Stack.Screen name="Quiz" component={QuizScreen} options={{ title: 'Quiz' }} />
+        <Stack.Screen name="Quiz" component={QuizScreen} options={{ headerShown: false, title: 'Quiz' }} />
         <Stack.Screen name="QuizEditor" component={QuizEditorScreen} options={{ title: 'Quiz questions' }} />
       </Stack.Navigator>
     </NavigationContainer>
