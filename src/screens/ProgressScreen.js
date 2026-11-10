@@ -6,10 +6,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
-import { getProgressDashboard, resetProgress } from '../db/database';
+import { getProgressDashboard } from '../db/database';
 import TiltCard from '../components/TiltCard';
 import { useAppTheme } from '../ThemeContext';
-import { confirmAction } from '../utils/confirm';
 import {
   CATEGORY_COLORS, categoryColor, f, levelMeta, progressPalette, starText,
 } from '../utils/progressStats';
@@ -137,18 +136,6 @@ export default function ProgressScreen({ navigation }) {
   const swayX = sway.interpolate({ inputRange: [0, 1], outputRange: ['2deg', '-2deg'] });
   const swayY = sway.interpolate({ inputRange: [0, 1], outputRange: ['-4deg', '4deg'] });
 
-  const reset = () => {
-    confirmAction({
-      title: 'Reset my progress',
-      message: 'This clears every quiz score, star, and XP saved on this device.',
-      confirmLabel: 'Reset',
-      onConfirm: async () => {
-        await resetProgress();
-        load();
-      },
-    });
-  };
-
   const delta = data.recent.length ? trendDelta(data.recent) : null;
 
   return (
@@ -163,8 +150,6 @@ export default function ProgressScreen({ navigation }) {
         paddingBottom: insets.bottom + 108,
       }}
     >
-      <Text style={[styles.h1, f('extra'), { color: palette.ink }]}>My progress</Text>
-
       <TiltCard enabled={!reduce} glare={false} radius={26} onActiveChange={setHeroTilt}>
       <Animated.View
         onLayout={(event) => setHeroWidth(event.nativeEvent.layout.width)}
@@ -326,10 +311,6 @@ export default function ProgressScreen({ navigation }) {
           </TiltCard>
         );
       })}
-
-      <Pressable onPress={reset} accessibilityRole="button" style={styles.reset}>
-        <Text style={[styles.resetText, f('medium'), { color: palette.mut }]}>Reset my progress</Text>
-      </Pressable>
     </ScrollView>
   );
 }
@@ -365,8 +346,18 @@ function deltaStyle(tone, palette) {
   return { backgroundColor: palette.trk, color: palette.mut };
 }
 
+const CARD_SHADOW = Platform.select({
+  web: { boxShadow: '0 6px 16px rgba(17,78,92,0.12)' },
+  default: {
+    shadowColor: '#114e5c',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+});
+
 const styles = StyleSheet.create({
-  h1: { fontSize: 28, marginTop: 4, marginBottom: 14 },
   h2: { fontSize: 19 },
   hero: {
     flexDirection: 'row',
@@ -402,13 +393,13 @@ const styles = StyleSheet.create({
   xpTrack: { height: 8, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.19)', overflow: 'hidden', marginBottom: 4 },
   xpFill: { height: '100%', borderRadius: 8 },
   tiles: { flexDirection: 'row', gap: 10, marginVertical: 12 },
-  tile: { flex: 1, borderWidth: 1, borderRadius: 18, padding: 12, alignItems: 'center' },
+  tile: { flex: 1, borderWidth: 1, borderRadius: 18, padding: 12, alignItems: 'center', ...CARD_SHADOW },
   tileValue: { fontSize: 24 },
   tileLabel: { fontSize: 12 },
   starRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   tileWrap: { flex: 1 },
   cardWrap: { marginBottom: 12 },
-  card: { borderWidth: 1, borderRadius: 22, padding: 16 },
+  card: { borderWidth: 1, borderRadius: 22, padding: 16, ...CARD_SHADOW },
   cardNote: { fontSize: 12, marginTop: 2 },
   trendHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
   trendScore: { fontSize: 32, lineHeight: 36 },
@@ -425,7 +416,7 @@ const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: 99, paddingVertical: 6, paddingHorizontal: 13 },
   chipText: { fontSize: 13 },
   destWrap: { marginBottom: 9 },
-  dest: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: 16, paddingVertical: 13, paddingHorizontal: 14 },
+  dest: { flexDirection: 'row', alignItems: 'center', gap: 14, borderWidth: 1, borderRadius: 16, paddingVertical: 13, paddingHorizontal: 14, ...CARD_SHADOW },
   check: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   destName: { flex: 1, minWidth: 0 },
   destTitle: { fontSize: 15 },
@@ -434,6 +425,4 @@ const styles = StyleSheet.create({
   score: { fontSize: 15 },
   attempts: { fontSize: 12 },
   stars: { fontSize: 13, letterSpacing: 1 },
-  reset: { alignSelf: 'center', marginTop: 14, padding: 8 },
-  resetText: { fontSize: 13, textDecorationLine: 'underline' },
 });
