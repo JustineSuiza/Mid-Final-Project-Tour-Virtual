@@ -36,7 +36,9 @@ export default function VirtualTourScreen({ route, navigation }) {
   const [page, setPage] = useState(0);
   const [selectedExhibit, setSelectedExhibit] = useState(null);
   const viewerImageRatio = selectedExhibit?.imageRatio || 1.5;
-  const viewerImageWidth = Math.min(screenWidth - 32, screenHeight * 0.34 * viewerImageRatio);
+  const viewerMaxWidth = screenWidth - 32;
+  const viewerMaxHeight = Math.max(180, screenHeight - insets.top - insets.bottom - 240);
+  const viewerImageWidth = Math.min(viewerMaxWidth, viewerMaxHeight * viewerImageRatio);
   const viewerImageHeight = viewerImageWidth / viewerImageRatio;
 
   useFocusEffect(
@@ -534,7 +536,6 @@ export default function VirtualTourScreen({ route, navigation }) {
               height={viewerImageHeight}
               accessibilityLabel={selectedExhibit.title}
             />
-            <Text style={styles.fullscreenHint}>Drag the picture to turn it in any direction</Text>
             <View style={styles.fullscreenCaption}>
               <Text style={styles.fullscreenTitle}>{selectedExhibit.title}</Text>
               <Text style={styles.fullscreenDescription}>{selectedExhibit.description}</Text>
@@ -579,9 +580,6 @@ const styles = StyleSheet.create({
   fullscreenContent: {
     flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 16, gap: 14,
-  },
-  fullscreenHint: {
-    color: 'rgba(255,255,255,0.6)', fontSize: 12, lineHeight: 16, textAlign: 'center',
   },
   fullscreenCaption: {
     width: '100%', maxWidth: 640, flexShrink: 0, paddingHorizontal: 20, paddingVertical: 14,

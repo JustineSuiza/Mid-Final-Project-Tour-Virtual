@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, PanResponder, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 
 const DEGREES = { inputRange: [0, 360], outputRange: ['0deg', '360deg'] };
@@ -11,12 +10,8 @@ const wrapSigned = (value) => {
 };
 
 // A picture that can be dragged to turn freely in any direction (360°),
-// with a slow idle spin that resumes when the finger is lifted, plus a
-// mirrored reflection that fades out beneath it.
-export default function RotatingImage({
-  source, width, height, radius = 10, gap = 8, reflection = 0.42, fadeColor = '#08090B',
-  style, accessibilityLabel,
-}) {
+// with a slow idle spin that resumes when the finger is lifted.
+export default function RotatingImage({ source, width, height, radius = 10, style, accessibilityLabel }) {
   const yaw = useRef(new Animated.Value(0)).current;
   const pitch = useRef(new Animated.Value(0)).current;
   const angle = useRef({ yaw: 0, pitch: 0 });
@@ -70,10 +65,9 @@ export default function RotatingImage({
 
   const rotateX = pitch.interpolate(DEGREES);
   const rotateY = yaw.interpolate(DEGREES);
-  const reflectionHeight = height * reflection;
 
   return (
-    <View style={[{ width, height: height + gap + reflectionHeight }, style]}>
+    <View style={[{ width, height }, style]}>
       <Animated.Image
         source={source}
         resizeMode="cover"
@@ -97,35 +91,12 @@ export default function RotatingImage({
       >
         <Defs>
           <RadialGradient id="floorGlow" cx="50%" cy="50%" rx="50%" ry="50%">
-            <Stop offset="0" stopColor="#ffffff" stopOpacity="0.3" />
+            <Stop offset="0" stopColor="#ffffff" stopOpacity="0.38" />
             <Stop offset="1" stopColor="#ffffff" stopOpacity="0" />
           </RadialGradient>
         </Defs>
         <Ellipse cx="50%" cy="50%" rx="50%" ry="50%" fill="url(#floorGlow)" />
       </Svg>
-      <View
-        pointerEvents="none"
-        style={[
-          styles.reflectionClip,
-          { width, height: reflectionHeight, top: height + gap, borderRadius: radius },
-        ]}
-      >
-        <Animated.Image
-          source={source}
-          resizeMode="cover"
-          style={{
-            width,
-            height: reflectionHeight,
-            borderRadius: radius,
-            opacity: 0.5,
-            transform: [{ scaleY: -1 }, { perspective: 1000 }, { rotateX }, { rotateY }],
-          }}
-        />
-        <LinearGradient
-          colors={['rgba(8,9,11,0)', fadeColor]}
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
     </View>
   );
 }
@@ -137,9 +108,5 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 12 },
     elevation: 8,
-  },
-  reflectionClip: {
-    position: 'absolute',
-    overflow: 'hidden',
   },
 });
