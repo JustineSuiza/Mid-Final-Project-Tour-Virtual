@@ -82,12 +82,20 @@ export async function initDatabase() {
   if (!columns.includes('longitude')) await db.execAsync('ALTER TABLE destinations ADD COLUMN longitude REAL');
 
   for (const d of SEED_DESTINATIONS) {
-    if (d.latitude == null || d.longitude == null) continue;
-    await db.runAsync(
-      `UPDATE destinations SET latitude = ?, longitude = ?
-        WHERE name = ? AND (latitude IS NULL OR longitude IS NULL)`,
-      [d.latitude, d.longitude, d.name]
-    );
+    if (d.latitude != null && d.longitude != null) {
+      await db.runAsync(
+        `UPDATE destinations SET latitude = ?, longitude = ?
+          WHERE name = ? AND (latitude IS NULL OR longitude IS NULL)`,
+        [d.latitude, d.longitude, d.name]
+      );
+    }
+    if (d.imageUri) {
+      await db.runAsync(
+        `UPDATE destinations SET imageUri = ?
+          WHERE name = ? AND (imageUri IS NULL OR imageUri = '')`,
+        [d.imageUri, d.name]
+      );
+    }
   }
 
   await syncLegacyQuizzes(db);
@@ -142,7 +150,7 @@ async function seedDatabase(db) {
         `INSERT INTO destinations
            (name, description, address, province, category, imageUri, latitude, longitude, history, significance, tourUrl, photos)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [d.name, d.description, d.address, d.province, d.category, null, d.latitude ?? null, d.longitude ?? null, d.history, d.significance, null, '[]']
+        [d.name, d.description, d.address, d.province, d.category, d.imageUri || null, d.latitude ?? null, d.longitude ?? null, d.history, d.significance, null, '[]']
       );
       for (const q of d.quiz) {
         await db.runAsync(

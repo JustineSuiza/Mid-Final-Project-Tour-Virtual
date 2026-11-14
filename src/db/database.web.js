@@ -62,7 +62,7 @@ function buildSeed() {
     const id = s.nextId.destination++;
     s.destinations.push({
       id, name: d.name, description: d.description, address: d.address, province: d.province,
-      category: d.category, imageUri: null, latitude: d.latitude ?? null, longitude: d.longitude ?? null,
+      category: d.category, imageUri: d.imageUri || null, latitude: d.latitude ?? null, longitude: d.longitude ?? null,
       history: d.history, significance: d.significance,
       tourUrl: null, photos: [], createdAt: new Date().toISOString(),
     });
@@ -99,11 +99,15 @@ export async function initDatabase() {
 
   // Seed records saved before map coordinates existed get them once here.
   for (const d of SEED_DESTINATIONS) {
-    if (d.latitude == null || d.longitude == null) continue;
     const saved = state.destinations.find((x) => x.name === d.name);
-    if (saved && (saved.latitude == null || saved.longitude == null)) {
+    if (!saved) continue;
+    if (d.latitude != null && d.longitude != null && (saved.latitude == null || saved.longitude == null)) {
       saved.latitude = d.latitude;
       saved.longitude = d.longitude;
+      changed = true;
+    }
+    if (d.imageUri && !saved.imageUri) {
+      saved.imageUri = d.imageUri;
       changed = true;
     }
   }

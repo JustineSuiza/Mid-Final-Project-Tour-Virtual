@@ -1,0 +1,48 @@
+export const AGUINALDO_IMAGE_URI = 'asset:aguinaldo-shrine';
+export const RIZAL_SHRINE_IMAGE_URI = 'asset:rizal-shrine-calamba';
+export const RIZAL_GROUND_FLOOR_EXHIBITS_IMAGE_URI = 'asset:rizal-ground-floor-exhibits';
+export const RIZAL_YOUNG_STATUE_IMAGE_URI = 'asset:rizal-young-statue';
+export const RIZAL_CHILDHOOD_MEMORABILIA_IMAGE_URI = 'asset:rizal-childhood-memorabilia';
+export const RIZAL_LIBRARY_IMAGE_URI = 'asset:rizal-library';
+export const RIZAL_FAMILY_DINING_ROOM_IMAGE_URI = 'asset:rizal-family-dining-room';
+export const RIZAL_BIRTH_ROOM_IMAGE_URI = 'asset:rizal-birth-room';
+export const RIZAL_BOYS_BEDROOM_IMAGE_URI = 'asset:rizal-boys-bedroom';
+export const RIZAL_GIRLS_BEDROOM_IMAGE_URI = 'asset:rizal-girls-bedroom';
+export const RIZAL_COMEDOR_IMAGE_URI = 'asset:rizal-comedor';
+export const RIZAL_TRADITIONAL_KITCHEN_IMAGE_URI = 'asset:rizal-traditional-kitchen';
+export const AGUINALDO_HOME_IMAGE_URI = 'asset:aguinaldo-home';
+export const AGUINALDO_SWORD_IMAGE_URI = 'asset:aguinaldo-sword';
+export const AGUINALDO_DIORAMA_IMAGE_URI = 'asset:aguinaldo-diorama';
+export const AGUINALDO_BEDROOM_IMAGE_URI = 'asset:aguinaldo-bedroom';
+export const AGUINALDO_DINING_ROOM_IMAGE_URI = 'asset:aguinaldo-dining-room';
+export const AGUINALDO_CEILING_MAP_IMAGE_URI = 'asset:aguinaldo-ceiling-map';
+export const AGUINALDO_BALCONY_IMAGE_URI = 'asset:aguinaldo-balcony';
+export const AGUINALDO_MEDICINE_CABINET_IMAGE_URI = 'asset:aguinaldo-medicine-cabinet';
+export const AGUINALDO_LUNCH_BOX_IMAGE_URI = 'asset:aguinaldo-lunch-box';
+export const AGUINALDO_SECRET_PASSAGE_IMAGE_URI = 'asset:aguinaldo-secret-passage';
+
+export function getDestinationImageSource(uri) {
+  if (uri === AGUINALDO_IMAGE_URI) return require('../../images/aguinaldo.jpg');
+  if (uri === RIZAL_SHRINE_IMAGE_URI) return require('../../images/Rizal Shrine.jpg');
+  if (uri === RIZAL_GROUND_FLOOR_EXHIBITS_IMAGE_URI) return require('../../images/Ground Floor Historical Exhibits.jpg');
+  if (uri === RIZAL_YOUNG_STATUE_IMAGE_URI) return require('../../images/Young José Rizal Statue.jpg');
+  if (uri === RIZAL_CHILDHOOD_MEMORABILIA_IMAGE_URI) return require("../../images/Rizal's Childhood Memorabilia.jpg");
+  if (uri === RIZAL_LIBRARY_IMAGE_URI) return require("../../images/Francisco Mercado's Library.jpg");
+  if (uri === RIZAL_FAMILY_DINING_ROOM_IMAGE_URI) return require('../../images/The Family Dining Room.jpg');
+  if (uri === RIZAL_BIRTH_ROOM_IMAGE_URI) return require("../../images/Rizal's Birth Room.jpg");
+  if (uri === RIZAL_BOYS_BEDROOM_IMAGE_URI) return require("../../images/Boys' Bedroom.jpg");
+  if (uri === RIZAL_GIRLS_BEDROOM_IMAGE_URI) return require("../../images/Girls' Bedroom.jpg");
+  if (uri === RIZAL_COMEDOR_IMAGE_URI) return require('../../images/Comedor and Traditional Ceiling Fan.jpg');
+  if (uri === RIZAL_TRADITIONAL_KITCHEN_IMAGE_URI) return require('../../images/Traditional Kitchen and Household Items.jpg');
+  if (uri === AGUINALDO_HOME_IMAGE_URI) return require('../../images/aguinaldohome.jpg');
+  if (uri === AGUINALDO_SWORD_IMAGE_URI) return require('../../images/swordaguinaldo.jpg');
+  if (uri === AGUINALDO_DIORAMA_IMAGE_URI) return require('../../images/Historical Diorama.jpg');
+  if (uri === AGUINALDO_BEDROOM_IMAGE_URI) return require("../../images/General Aguinaldo's Bedroom.jpg");
+  if (uri === AGUINALDO_DINING_ROOM_IMAGE_URI) return require('../../images/Antique Dining Room.jpg');
+  if (uri === AGUINALDO_CEILING_MAP_IMAGE_URI) return require('../../images/Philippine Map on the Dining Room Ceiling.jpg');
+  if (uri === AGUINALDO_BALCONY_IMAGE_URI) return require('../../images/The Balcony of Sinners (Galeria de los Pecadores).jpg');
+  if (uri === AGUINALDO_MEDICINE_CABINET_IMAGE_URI) return require('../../images/Antique Medicine Cabinet.jpg');
+  if (uri === AGUINALDO_LUNCH_BOX_IMAGE_URI) return require("../../images/Aguinaldo's Personal Lunch Box.jpg");
+  if (uri === AGUINALDO_SECRET_PASSAGE_IMAGE_URI) return require('../../images/Secret Passage and Bomb Shelter.jpg');
+  return uri ? { uri } : null;
+}

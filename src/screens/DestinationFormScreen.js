@@ -5,8 +5,10 @@ import {
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import Button from '../components/Button';
 import CategoryChip from '../components/CategoryChip';
+import DestinationImage from '../components/DestinationImage';
 import Field from '../components/Field';
 import { createDestination, getDestination, updateDestination } from '../db/database';
+import { AGUINALDO_IMAGE_URI } from '../utils/destinationImages';
 import { pickPhotos } from '../utils/photos';
 import { useAppTheme } from '../ThemeContext';
 import { categories, colors, provinces } from '../theme';
@@ -97,14 +99,14 @@ export default function DestinationFormScreen({ route, navigation }) {
         </View>
 
         <Text style={[styles.label, { color: text }]}>Cover image</Text>
-        {form.imageUri ? <Image source={{ uri: form.imageUri }} style={styles.cover} /> : null}
+        {form.imageUri ? <DestinationImage uri={form.imageUri} category={form.category} style={styles.cover} /> : null}
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
           <Button label="Choose photo" icon="image-plus" variant="secondary" style={{ flex: 1 }} onPress={() => choosePhotos(false)} />
           {form.imageUri ? <Button label="Remove" variant="danger" onPress={() => set('imageUri', '')} /> : null}
         </View>
         <Field
           label="Or paste an image link"
-          value={form.imageUri.startsWith('data:') ? '' : form.imageUri}
+          value={form.imageUri.startsWith('data:') || form.imageUri === AGUINALDO_IMAGE_URI ? '' : form.imageUri}
           onChangeText={(v) => set('imageUri', v)}
           autoCapitalize="none" keyboardType="url" placeholder="https://…"
         />

@@ -1,5 +1,6 @@
-// Starter records for the CALABARZON provinces. Photos are intentionally empty:
-// add your own through Edit destination so every image is one you may use.
+import { AGUINALDO_IMAGE_URI, RIZAL_SHRINE_IMAGE_URI } from '../utils/destinationImages';
+
+// Starter records for the CALABARZON provinces. Add destination photos through Edit destination.
 export const SEED_DESTINATIONS = [
   {
     name: 'Aguinaldo Shrine',
@@ -8,6 +9,7 @@ export const SEED_DESTINATIONS = [
     address: 'Kawit, Cavite',
     latitude: 14.445,
     longitude: 120.90694,
+    imageUri: AGUINALDO_IMAGE_URI,
     description:
       'The ancestral house of General Emilio Aguinaldo, where Philippine independence was proclaimed on June 12, 1898. Today it is kept as a national shrine and museum.',
     history:
@@ -27,6 +29,7 @@ export const SEED_DESTINATIONS = [
     category: 'Historical',
     province: 'Laguna',
     address: 'Calamba, Laguna',
+    imageUri: RIZAL_SHRINE_IMAGE_URI,
     latitude: 14.2116,
     longitude: 121.1653,
     description:
