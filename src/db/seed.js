@@ -1,4 +1,8 @@
-import { AGUINALDO_IMAGE_URI, RIZAL_SHRINE_IMAGE_URI } from '../utils/destinationImages';
+import {
+  AGUINALDO_IMAGE_URI, ANTIPOLO_COVER_IMAGE_URI, PAHIYAS_FESTIVAL_IMAGE_URI,
+  PILA_HISTORIC_TOWN_CENTER_IMAGE_URI, RIZAL_SHRINE_IMAGE_URI,
+  MAKILING_FOREST_RESERVE_IMAGE_URI, TAAL_HERITAGE_TOWN_IMAGE_URI, TAAL_VOLCANO_IMAGE_URI,
+} from '../utils/destinationImages';
 
 // Starter records for the CALABARZON provinces. Add destination photos through Edit destination.
 export const SEED_DESTINATIONS = [
@@ -51,6 +55,7 @@ export const SEED_DESTINATIONS = [
     category: 'Cultural',
     province: 'Laguna',
     address: 'Pila, Laguna',
+    imageUri: PILA_HISTORIC_TOWN_CENTER_IMAGE_URI,
     latitude: 14.2326,
     longitude: 121.3646,
     description:
@@ -72,6 +77,7 @@ export const SEED_DESTINATIONS = [
     category: 'Nature',
     province: 'Laguna',
     address: 'Los Baños, Laguna',
+    imageUri: MAKILING_FOREST_RESERVE_IMAGE_URI,
     latitude: 14.1478,
     longitude: 121.2437,
     description:
@@ -93,6 +99,7 @@ export const SEED_DESTINATIONS = [
     category: 'Cultural',
     province: 'Batangas',
     address: 'Taal, Batangas',
+    imageUri: TAAL_HERITAGE_TOWN_IMAGE_URI,
     latitude: 13.8797,
     longitude: 120.9236,
     description:
@@ -114,6 +121,7 @@ export const SEED_DESTINATIONS = [
     category: 'Nature',
     province: 'Batangas',
     address: 'Taal Lake, Batangas',
+    imageUri: TAAL_VOLCANO_IMAGE_URI,
     latitude: 14.0021,
     longitude: 120.9934,
     description:
@@ -135,6 +143,7 @@ export const SEED_DESTINATIONS = [
     category: 'Cultural',
     province: 'Quezon',
     address: 'Lucban, Quezon',
+    imageUri: PAHIYAS_FESTIVAL_IMAGE_URI,
     latitude: 14.1142,
     longitude: 121.5556,
     description:
@@ -156,6 +165,7 @@ export const SEED_DESTINATIONS = [
     category: 'Religious',
     province: 'Rizal',
     address: 'Antipolo, Rizal',
+    imageUri: ANTIPOLO_COVER_IMAGE_URI,
     latitude: 14.5864,
     longitude: 121.1761,
     description:
