@@ -76,6 +76,15 @@ function buildSeed() {
   return s;
 }
 
+function sameQuiz(existing, seedQuiz) {
+  return existing.length === seedQuiz.length && existing.every((q, i) => {
+    const seed = seedQuiz[i];
+    return q.question === seed.question
+      && q.answerIndex === seed.answerIndex
+      && JSON.stringify(q.options) === JSON.stringify(seed.options);
+  });
+}
+
 export async function initDatabase() {
   state = await idbGet();
   if (!state) {
@@ -111,6 +120,32 @@ export async function initDatabase() {
       changed = true;
     }
   }
+
+  for (const d of SEED_DESTINATIONS) {
+    const saved = state.destinations.find((x) => x.name === d.name);
+    if (!saved) continue;
+    const existing = state.questions
+      .filter((q) => q.destinationId === saved.id)
+      .sort((a, b) => a.id - b.id);
+    if (sameQuiz(existing, d.quiz)) continue;
+    const legacySets = LEGACY_QUIZ_QUESTIONS[d.name];
+    const isLegacyQuiz = legacySets && legacySets.some((legacy) =>
+      existing.length === legacy.length && existing.every((q, i) => q.question === legacy[i])
+    );
+    if (!isLegacyQuiz) continue;
+
+    state.questions = state.questions.filter((q) => q.destinationId !== saved.id);
+    state.attempts = state.attempts.filter((attempt) => attempt.destinationId !== saved.id);
+    delete state.progress[saved.id];
+    for (const q of d.quiz) {
+      state.questions.push({
+        id: state.nextId.question++, destinationId: saved.id, question: q.question,
+        options: [...q.options], answerIndex: q.answerIndex, explanation: q.explanation,
+      });
+    }
+    changed = true;
+  }
+
   if (changed) await save();
 }
 

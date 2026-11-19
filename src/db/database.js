@@ -113,8 +113,8 @@ function sameQuiz(existing, seedQuiz) {
 
 async function syncLegacyQuizzes(db) {
   for (const dest of SEED_DESTINATIONS) {
-    const legacy = LEGACY_QUIZ_QUESTIONS[dest.name];
-    if (!legacy) continue;
+    const legacySets = LEGACY_QUIZ_QUESTIONS[dest.name];
+    if (!legacySets) continue;
     const row = await db.getFirstAsync(
       'SELECT id FROM destinations WHERE name = ? ORDER BY id LIMIT 1',
       [dest.name]
@@ -125,8 +125,9 @@ async function syncLegacyQuizzes(db) {
       [row.id]
     );
     if (sameQuiz(existing, dest.quiz)) continue;
-    const legacyMatch = existing.length === legacy.length
-      && existing.every((q, i) => q.question === legacy[i]);
+    const legacyMatch = legacySets.some((legacy) =>
+      existing.length === legacy.length && existing.every((q, i) => q.question === legacy[i])
+    );
     if (!legacyMatch) continue;
     await db.withTransactionAsync(async () => {
       await db.runAsync('DELETE FROM quiz_attempts WHERE destinationId = ?', [row.id]);
