@@ -11,6 +11,7 @@ export default function SettingsScreen() {
   const {
     isDark, setIsDark, themeError,
     musicEnabled, setMusicEnabled, musicVolume, setMusicVolume, musicError,
+    photoMotionEnabled, setPhotoMotionEnabled, photoMotionError,
     background, surface, text, mutedText, border, accent,
   } = useAppTheme();
   const toggleRef = useRef(null);
@@ -113,6 +114,14 @@ export default function SettingsScreen() {
     }
   };
 
+  const togglePhotoMotion = async (nextEnabled) => {
+    try {
+      await setPhotoMotionEnabled(nextEnabled);
+    } catch (error) {
+      // The error message is exposed through photoMotionError.
+    }
+  };
+
   return (
     <ScrollView
       style={[styles.screen, { backgroundColor: background }]}
@@ -168,18 +177,25 @@ export default function SettingsScreen() {
       </View>
       {themeError || toggleError ? <Text style={styles.error}>{toggleError || themeError}</Text> : null}
 
-      <Text style={[styles.sectionTitle, { color: text }]}>Data and privacy</Text>
-      <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
-        <View style={styles.iconBox}>
-          <Icon name="database-outline" size={23} color={accent} />
-        </View>
-        <View style={styles.cardCopy}>
-          <Text style={[styles.cardTitle, { color: text }]}>Your tour data</Text>
-          <Text style={[styles.description, { color: mutedText }]}>
-            Destinations, photos, and quiz progress are saved on this device or in this browser. They are not synced between devices.
+      <View style={[styles.settingRow, { borderBottomColor: border }]}>
+        <View style={styles.settingCopy}>
+          <Text style={[styles.settingLabel, { color: text }]}>3D photo motion</Text>
+          <Text style={[styles.settingDescription, { color: mutedText }]}>
+            Rotates and tilts exhibit photos. Turn off to reduce motion.
           </Text>
         </View>
+        <Switch
+          value={photoMotionEnabled}
+          onValueChange={togglePhotoMotion}
+          trackColor={{ false: border, true: accent }}
+          thumbColor="#FFFFFF"
+          ios_backgroundColor={border}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: photoMotionEnabled }}
+          accessibilityLabel="Toggle 3D photo motion"
+        />
       </View>
+      {photoMotionError ? <Text style={styles.error}>{photoMotionError}</Text> : null}
 
     </ScrollView>
   );
@@ -197,6 +213,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   settingLabel: { flex: 1, fontSize: 16, fontWeight: '600' },
+  settingCopy: { flex: 1, paddingVertical: 12 },
+  settingDescription: { fontSize: 13, lineHeight: 18, marginTop: 4 },
   musicControls: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   musicSlider: { width: 116, height: 40 },
   volumeValue: { width: 36, fontSize: 12, textAlign: 'right' },

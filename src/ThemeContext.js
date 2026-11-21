@@ -6,6 +6,7 @@ const ThemeContext = createContext(null);
 const STORAGE_KEY = 'calabarzon-tour-theme';
 const MUSIC_ENABLED_KEY = 'calabarzon-tour-music-enabled';
 const MUSIC_VOLUME_KEY = 'calabarzon-tour-music-volume';
+const PHOTO_MOTION_ENABLED_KEY = 'calabarzon-tour-photo-motion-enabled';
 
 export function ThemeProvider({ children }) {
   const systemScheme = useColorScheme();
@@ -14,6 +15,8 @@ export function ThemeProvider({ children }) {
   const [musicEnabled, setMusicEnabledState] = useState(false);
   const [musicVolume, setMusicVolumeState] = useState(0.6);
   const [musicError, setMusicError] = useState('');
+  const [photoMotionEnabled, setPhotoMotionEnabledState] = useState(true);
+  const [photoMotionError, setPhotoMotionError] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -43,6 +46,16 @@ export function ThemeProvider({ children }) {
       }
     }).catch((error) => {
       if (active) setMusicError(`Could not load music settings: ${error.message || error}`);
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem(PHOTO_MOTION_ENABLED_KEY).then((savedEnabled) => {
+      if (active && savedEnabled !== null) setPhotoMotionEnabledState(savedEnabled === '1');
+    }).catch((error) => {
+      if (active) setPhotoMotionError(`Could not load photo motion setting: ${error.message || error}`);
     });
     return () => { active = false; };
   }, []);
@@ -84,6 +97,18 @@ export function ThemeProvider({ children }) {
     }
   }, []);
 
+  const changePhotoMotionEnabled = useCallback(async (nextEnabled) => {
+    try {
+      await AsyncStorage.setItem(PHOTO_MOTION_ENABLED_KEY, nextEnabled ? '1' : '0');
+      setPhotoMotionEnabledState(nextEnabled);
+      setPhotoMotionError('');
+    } catch (error) {
+      const message = `Could not save photo motion setting: ${error.message || error}`;
+      setPhotoMotionError(message);
+      throw new Error(message);
+    }
+  }, []);
+
   const value = useMemo(() => ({
     isDark,
     setIsDark: changeTheme,
@@ -93,6 +118,9 @@ export function ThemeProvider({ children }) {
     musicVolume,
     setMusicVolume: changeMusicVolume,
     musicError,
+    photoMotionEnabled,
+    setPhotoMotionEnabled: changePhotoMotionEnabled,
+    photoMotionError,
     background: isDark ? '#0D141C' : '#FFFFFF',
     surface: isDark ? '#16212D' : '#FFFFFF',
     text: isDark ? '#E8EEF5' : '#14232A',
@@ -100,8 +128,8 @@ export function ThemeProvider({ children }) {
     border: isDark ? '#263646' : '#D9E0DE',
     accent: isDark ? '#6AA5FF' : '#0F4C5C',
   }), [
-    changeMusicEnabled, changeMusicVolume, changeTheme, isDark, musicEnabled, musicError,
-    musicVolume, themeError,
+    changeMusicEnabled, changeMusicVolume, changePhotoMotionEnabled, changeTheme, isDark,
+    musicEnabled, musicError, musicVolume, photoMotionEnabled, photoMotionError, themeError,
   ]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
-  FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View,
+  FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -50,7 +50,7 @@ import {
 } from '../utils/destinationImages';
 
 export default function VirtualTourScreen({ route, navigation }) {
-  const { background, text, mutedText } = useAppTheme();
+  const { background, text, mutedText, photoMotionEnabled } = useAppTheme();
   const insets = useSafeAreaInsets();
   const { id } = route.params;
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -1078,12 +1078,21 @@ export default function VirtualTourScreen({ route, navigation }) {
             </ScrollView>
           </View>
           <View style={[styles.fullscreenContent, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-            <RotatingImage
-              source={getDestinationImageSource(selectedExhibit.image)}
-              width={viewerImageWidth}
-              height={viewerImageHeight}
-              accessibilityLabel={selectedExhibit.title}
-            />
+            {photoMotionEnabled ? (
+              <RotatingImage
+                source={getDestinationImageSource(selectedExhibit.image)}
+                width={viewerImageWidth}
+                height={viewerImageHeight}
+                accessibilityLabel={selectedExhibit.title}
+              />
+            ) : (
+              <Image
+                source={getDestinationImageSource(selectedExhibit.image)}
+                resizeMode="cover"
+                accessibilityLabel={selectedExhibit.title}
+                style={{ width: viewerImageWidth, height: viewerImageHeight, borderRadius: 10 }}
+              />
+            )}
             <View style={styles.fullscreenCaption}>
               <Text style={styles.fullscreenTitle}>{selectedExhibit.title}</Text>
               <Text style={styles.fullscreenDescription}>{selectedExhibit.description}</Text>

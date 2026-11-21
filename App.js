@@ -8,6 +8,7 @@ import { ThemeProvider, useAppTheme } from './src/ThemeContext';
 import { AccountProvider } from './src/AccountContext';
 import { MAX_WIDTH, colors } from './src/theme';
 import { markProgressFonts } from './src/utils/progressStats';
+import IntroScreen from './src/screens/IntroScreen';
 
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   markProgressFonts('web');
@@ -22,16 +23,23 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 
 function AppContent() {
   const { isDark, background } = useAppTheme();
+  const [showIntro, setShowIntro] = useState(true);
   return (
     <>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <StatusBar
+        style={showIntro || isDark ? 'light' : 'dark'}
+        translucent={showIntro}
+        backgroundColor={showIntro ? 'transparent' : undefined}
+      />
       <View style={{
         flex: 1,
         alignItems: 'center',
         backgroundColor: isDark ? '#080E14' : '#FFFFFF',
       }}>
         <View style={{ flex: 1, width: '100%', maxWidth: Platform.OS === 'web' ? MAX_WIDTH : undefined, backgroundColor: background }}>
-          <AppNavigator />
+          {showIntro
+            ? <IntroScreen onExplore={() => setShowIntro(false)} />
+            : <AppNavigator />}
         </View>
       </View>
     </>

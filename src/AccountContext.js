@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { hashPassword, verifyPassword } from './utils/passwords';
 
 const AccountContext = createContext(null);
 const ACCOUNTS_KEY = 'gala-tour-local-accounts-v1';
@@ -49,21 +50,59 @@ export function AccountProvider({ children }) {
     return () => { active = false; };
   }, []);
 
-  const login = useCallback(async ({ email }) => {
+  const login = useCallback(async ({ email, password }) => {
     const normalizedEmail = email.trim().toLowerCase();
     let account = accounts[normalizedEmail];
-
     if (!account) {
-      account = { profile: { ...DEFAULT_PROFILE } };
-      const nextAccounts = { ...accounts, [normalizedEmail]: account };
+      throw new Error('No account was found for this email. Please create an account first.');
+    }
+
+    account = { ...account, profile: { ...DEFAULT_PROFILE, ...account.profile } };
+    if (account.passwordHash) {
+      const passwordMatches = await verifyPassword(password, account.passwordHash);
+      if (!passwordMatches) {
+        throw new Error('The email or password is incorrect.');
+      }
+    } else {
+      const nextAccount = {
+        ...account,
+        passwordHash: await hashPassword(password),
+      };
+      const nextAccounts = { ...accounts, [normalizedEmail]: nextAccount };
       await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(nextAccounts));
       setAccounts(nextAccounts);
-    } else {
-      account = { ...account, profile: { ...DEFAULT_PROFILE, ...account.profile } };
+      account = nextAccount;
     }
 
     await AsyncStorage.setItem(SESSION_KEY, normalizedEmail);
     setCurrentUser({ email: normalizedEmail, ...DEFAULT_PROFILE, ...account.profile });
+    setStorageError('');
+  }, [accounts]);
+
+  const createAccount = useCallback(async ({ email, password, profile }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password || !profile?.name?.trim()) {
+      throw new Error('Complete the required account information.');
+    }
+    if (password.length < 8) {
+      throw new Error('Your password must be at least 8 characters long.');
+    }
+    if (accounts[normalizedEmail]) {
+      throw new Error('An account with this email already exists. Please sign in instead.');
+    }
+
+    const savedProfile = { ...DEFAULT_PROFILE, ...profile, name: profile.name.trim() };
+    const nextAccounts = {
+      ...accounts,
+      [normalizedEmail]: {
+        profile: savedProfile,
+        passwordHash: await hashPassword(password),
+      },
+    };
+    await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(nextAccounts));
+    await AsyncStorage.setItem(SESSION_KEY, normalizedEmail);
+    setAccounts(nextAccounts);
+    setCurrentUser({ email: normalizedEmail, ...savedProfile });
     setStorageError('');
   }, [accounts]);
 
@@ -91,10 +130,11 @@ export function AccountProvider({ children }) {
     currentUser,
     loading,
     storageError,
+    createAccount,
     login,
     saveProfile,
     logout,
-  }), [accounts, currentUser, loading, storageError, login, saveProfile, logout]);
+  }), [accounts, currentUser, loading, storageError, createAccount, login, saveProfile, logout]);
 
   return <AccountContext.Provider value={value}>{children}</AccountContext.Provider>;
 }

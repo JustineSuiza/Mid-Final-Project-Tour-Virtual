@@ -11,7 +11,8 @@
     "plugins": [
       "expo-sqlite",
       "expo-font",
-      "expo-image"
+      "expo-image",
+      "expo-video"
     ]
   }
 }

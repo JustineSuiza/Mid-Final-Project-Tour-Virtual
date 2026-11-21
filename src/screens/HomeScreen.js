@@ -9,6 +9,7 @@ import { useAccount } from '../AccountContext';
 import { getHomeData } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
+import { getDestinationImageSource } from '../utils/destinationImages';
 
 const FAQ_ITEMS = [
   {
@@ -166,7 +167,7 @@ export default function HomeScreen({ navigation }) {
                       : c === 'Cultural'
                       ? require('../../images/culture.jpg')
                       : home.categoryImages[c]
-                      ? { uri: home.categoryImages[c] }
+                      ? getDestinationImageSource(home.categoryImages[c])
                       : c === 'Nature' ? require('../../images/beach.jpeg') : undefined
                   }
                   style={[styles.categoryImage, { backgroundColor: categoryMeta[c].color }]}

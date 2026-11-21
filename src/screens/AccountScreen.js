@@ -77,10 +77,39 @@ function formatDisplayDate(dateStr) {
   return dateStr;
 }
 
+function calculateAge(dateStr) {
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(dateStr || '').trim());
+  if (!match) return null;
+
+  const month = parseInt(match[1], 10);
+  const day = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+  const birthDateValue = new Date(year, month - 1, day);
+  if (
+    birthDateValue.getFullYear() !== year
+    || birthDateValue.getMonth() !== month - 1
+    || birthDateValue.getDate() !== day
+  ) {
+    return null;
+  }
+
+  const today = new Date();
+  if (birthDateValue > today) return null;
+
+  let age = today.getFullYear() - year;
+  if (
+    today.getMonth() < month - 1
+    || (today.getMonth() === month - 1 && today.getDate() < day)
+  ) {
+    age -= 1;
+  }
+  return age;
+}
+
 export default function AccountScreen() {
   const insets = useSafeAreaInsets();
   const { isDark, background, surface, text, mutedText, border, accent } = useAppTheme();
-  const { currentUser, loading, storageError, login, saveProfile, logout } = useAccount();
+  const { currentUser, loading, storageError, createAccount, login, saveProfile, logout } = useAccount();
 
   const [mode, setMode] = useState('signIn');
   const [profileView, setProfileView] = useState('preview'); // 'preview' | 'edit'
@@ -203,20 +232,6 @@ export default function AccountScreen() {
     setPhotoError('');
   };
 
-  const prefillSampleData = () => {
-    setName('Jose Rizal');
-    setStreetAddress('Real Street, Poblacion');
-    setCity('Calamba');
-    setProvince('Laguna');
-    setPostalCode('4027');
-    setBirthDate('06/19/1861');
-    setPhone('917 186 1896');
-    setAboutMe('Writer, polymath, and explorer of historical landmarks and nature trails across Calabarzon.');
-    setTwitter('@jrizal_hero');
-    setCountry(PHONE_COUNTRIES[0]);
-    setNotice('Prefilled sample explorer details.');
-  };
-
   const cancelEdit = () => {
     if (currentUser) {
       setName(currentUser.name || '');
@@ -284,6 +299,63 @@ export default function AccountScreen() {
       return;
     }
 
+    if (mode === 'signUp') {
+      if (!name.trim()) {
+        setNotice('Please enter your full name.');
+        return;
+      }
+      if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        setNotice('Please enter a valid email address.');
+        return;
+      }
+      if (password.length < 8) {
+        setNotice('Your password must be at least 8 characters long.');
+        return;
+      }
+      if (calculateAge(birthDate) === null) {
+        setNotice('Please select a valid date of birth.');
+        return;
+      }
+      const requiredDetails = [
+        { label: 'mobile phone number', value: phone },
+        { label: 'street address', value: streetAddress },
+        { label: 'city or town', value: city },
+        { label: 'province', value: province },
+        { label: 'postal code', value: postalCode },
+      ];
+      const missingDetail = requiredDetails.find((detail) => !detail.value.trim());
+      if (missingDetail) {
+        setNotice(`Please enter your ${missingDetail.label}.`);
+        return;
+      }
+
+      setIsSaving(true);
+      try {
+        await createAccount({
+          email,
+          password,
+          profile: {
+            name: name.trim(),
+            birthDate,
+            country,
+            phone: phone.trim(),
+            streetAddress: streetAddress.trim(),
+            city: city.trim(),
+            province: province.trim(),
+            postalCode: postalCode.trim(),
+          },
+        });
+        setPassword('');
+        setMode('profile');
+        setNotice('Your Calabarzon Tour account has been created.');
+      } catch (error) {
+        setNotice(error.message || 'Could not create your account.');
+      } finally {
+        setIsSaving(false);
+      }
+      return;
+    }
+
     // Sign in mode validation
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setNotice('Please enter a valid email address.');
@@ -296,25 +368,11 @@ export default function AccountScreen() {
 
     setIsSaving(true);
     try {
-      await login({ email });
+      await login({ email, password });
       setMode('profile');
       setNotice('Welcome back! Signed into your Calabarzon Tour account.');
     } catch (error) {
       setNotice(error.message || 'Could not complete sign in.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setIsSaving(true);
-    setNotice('');
-    try {
-      await login({ email: 'traveler@calabarzon.ph' });
-      setMode('profile');
-      setNotice('Signed into Demo Explorer account.');
-    } catch (error) {
-      setNotice(error.message || 'Could not log into demo account.');
     } finally {
       setIsSaving(false);
     }
@@ -731,14 +789,8 @@ export default function AccountScreen() {
                 /* =================== EDIT MODE (CLEAN & MINIMAL) =================== */
                 <>
                   {/* Section 1: Personal & Location (Edit Mode) */}
-                  <View style={styles.editSectionHeaderRow}>
-                    <Text style={[styles.groupHeaderLabel, { color: mutedText, marginBottom: 0 }]}>
-                      PERSONAL & LOCATION
-                    </Text>
-                    <Pressable onPress={prefillSampleData} style={styles.prefillChip} hitSlop={6}>
-                      <Icon name="auto-fix" size={13} color="#D99A1E" />
-                      <Text style={styles.prefillChipText}>Prefill Sample</Text>
-                    </Pressable>
+                  <View style={styles.groupHeaderWrap}>
+                    <Text style={[styles.groupHeaderLabel, { color: mutedText }]}>PERSONAL & LOCATION</Text>
                   </View>
 
                   <View style={[styles.groupedCard, { backgroundColor: surface, borderColor: border, padding: 14, gap: 12 }]}>
@@ -1025,114 +1077,371 @@ export default function AccountScreen() {
             <View style={[styles.signInFormCard, { backgroundColor: surface }]}>
               <View style={styles.signInFormInner}>
                 <View style={styles.signInHeaderWrap}>
-                  <Text style={[styles.signInSectionTitle, { color: text }]}>Welcome Traveler</Text>
+                  <Text style={[styles.signInSectionTitle, { color: text }]}>
+                    {mode === 'forgotPassword'
+                      ? 'Forgot Password?'
+                      : mode === 'signUp'
+                        ? 'Create Your Account'
+                        : 'Welcome Traveler'}
+                  </Text>
                   <Text style={[styles.signInSectionSub, { color: mutedText }]}>
-                    Sign in to track your personal travel passport, recorded quiz scores, and province milestones.
+                    {mode === 'forgotPassword'
+                      ? 'Password recovery information for your Calabarzon Tour account.'
+                      : mode === 'signUp'
+                        ? 'Create your traveler passport and start tracking your Calabarzon adventures.'
+                        : 'Sign in to track your personal travel passport, recorded quiz scores, and province milestones.'}
                   </Text>
                 </View>
 
-                {/* Email Input */}
-                <SimpleInputField
-                  label="Email Address"
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="you@calabarzon.ph"
-                  icon="email-outline"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  textContentType="emailAddress"
-                  text={text}
-                  mutedText={mutedText}
-                  border={border}
-                  inputBg={inputBg}
-                  accent={accent}
-                />
-
-                {/* Password Input with Visibility Toggle */}
-                <View style={styles.simpleFieldWrap}>
-                  <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>PASSWORD</Text>
-                  <View
-                    style={[
-                      styles.simpleInputRow,
-                      {
-                        backgroundColor: inputBg,
-                        borderColor: border,
-                      },
-                    ]}
-                  >
-                    <Icon name="lock-outline" size={18} color={mutedText} />
-                    <TextInput
-                      value={password}
-                      onChangeText={setPassword}
-                      placeholder="Enter password (any for demo)"
-                      placeholderTextColor="#8A9CA9"
-                      secureTextEntry={!showPassword}
-                      textContentType="password"
-                      style={[styles.simpleInputText, { color: text }]}
-                      accessibilityLabel="Password"
+                {mode === 'forgotPassword' ? (
+                  <>
+                    <SimpleInputField
+                      label="Email Address"
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="you@calabarzon.ph"
+                      icon="email-outline"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      textContentType="emailAddress"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
                     />
                     <Pressable
-                      onPress={() => setShowPassword(!showPassword)}
-                      hitSlop={8}
+                      onPress={() => {
+                        setMode('signIn');
+                        setNotice('');
+                      }}
+                      style={styles.signInSubmitButton}
                       accessibilityRole="button"
-                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                     >
-                      <Icon
-                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                        size={18}
-                        color={mutedText}
-                      />
+                      <LinearGradient
+                        colors={['#0F4C5C', '#1D7287']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.signInGradientButton}
+                      >
+                        <Icon name="arrow-left" size={20} color="#FFFFFF" />
+                        <Text style={styles.signInGradientButtonText}>Back to Sign In</Text>
+                      </LinearGradient>
                     </Pressable>
-                  </View>
-                </View>
-
-                {/* Buttons Group */}
-                <View style={styles.signInActionsGroup}>
-                  {/* Sign In Button */}
-                  <Pressable
-                    onPress={submit}
-                    disabled={isSaving}
-                    style={styles.signInSubmitButton}
-                    accessibilityRole="button"
-                  >
-                    <LinearGradient
-                      colors={['#0F4C5C', '#1D7287']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.signInGradientButton}
+                  </>
+                ) : mode === 'signUp' ? (
+                  <>
+                    <SimpleInputField
+                      label="Full Name"
+                      value={name}
+                      onChangeText={setName}
+                      placeholder="Your full name"
+                      icon="account-outline"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+                    <SimpleInputField
+                      label="Email Address"
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="you@calabarzon.ph"
+                      icon="email-outline"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      textContentType="emailAddress"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+                    <View style={styles.simpleFieldWrap}>
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>PASSWORD *</Text>
+                      <View
+                        style={[
+                          styles.simpleInputRow,
+                          {
+                            backgroundColor: inputBg,
+                            borderColor: border,
+                          },
+                        ]}
+                      >
+                        <Icon name="lock-outline" size={18} color={mutedText} />
+                        <TextInput
+                          value={password}
+                          onChangeText={setPassword}
+                          placeholder="At least 8 characters"
+                          placeholderTextColor="#8A9CA9"
+                          secureTextEntry={!showPassword}
+                          textContentType="newPassword"
+                          autoCapitalize="none"
+                          style={[styles.simpleInputText, { color: text }]}
+                          accessibilityLabel="Create password"
+                        />
+                        <Pressable
+                          onPress={() => setShowPassword(!showPassword)}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          <Icon
+                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                            size={18}
+                            color={mutedText}
+                          />
+                        </Pressable>
+                      </View>
+                    </View>
+                    <Pressable
+                      onPress={() => setBirthDatePickerVisible(true)}
+                      style={styles.simpleFieldWrap}
+                      accessibilityRole="button"
                     >
-                      {isSaving ? (
-                        <ActivityIndicator size="small" color="#FFFFFF" />
-                      ) : (
-                        <>
-                          <Icon name="login-variant" size={20} color="#FFFFFF" />
-                          <Text style={styles.signInGradientButtonText}>Sign In to Account</Text>
-                        </>
-                      )}
-                    </LinearGradient>
-                  </Pressable>
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>DATE OF BIRTH / AGE *</Text>
+                      <View style={[styles.simpleInputRow, { backgroundColor: inputBg, borderColor: border }]}>
+                        <Icon name="calendar-month-outline" size={18} color={accent} />
+                        <Text style={[styles.simpleInputText, { color: birthDate ? text : mutedText, flex: 1 }]}>
+                          {birthDate
+                            ? `${formatDisplayDate(birthDate)}${calculateAge(birthDate) === null ? '' : ` · Age ${calculateAge(birthDate)}`}`
+                            : 'Select birth date'}
+                        </Text>
+                        <Icon name="chevron-down" size={18} color={mutedText} />
+                      </View>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setCountryPickerVisible(true)}
+                      style={styles.simpleFieldWrap}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>COUNTRY / NATIONALITY *</Text>
+                      <View style={[styles.simpleInputRow, { backgroundColor: inputBg, borderColor: border }]}>
+                        <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.inputFlag} />
+                        <Text style={[styles.simpleInputText, { color: text, flex: 1, fontWeight: '600' }]}>
+                          {country.name}
+                        </Text>
+                        <Text style={[styles.countryCodeBadge, { color: mutedText }]}>{country.code}</Text>
+                        <Icon name="chevron-right" size={18} color={mutedText} />
+                      </View>
+                    </Pressable>
+                    <SimpleInputField
+                      label="Street Address *"
+                      value={streetAddress}
+                      onChangeText={setStreetAddress}
+                      placeholder="e.g. Real Street, Poblacion"
+                      icon="home-city-outline"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+                    <View style={styles.gridRow}>
+                      <View style={{ flex: 1 }}>
+                        <SimpleInputField
+                          label="City / Town *"
+                          value={city}
+                          onChangeText={setCity}
+                          placeholder="Calamba"
+                          icon="city-variant-outline"
+                          text={text}
+                          mutedText={mutedText}
+                          border={border}
+                          inputBg={inputBg}
+                          accent={accent}
+                        />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <SimpleInputField
+                          label="Province *"
+                          value={province}
+                          onChangeText={setProvince}
+                          placeholder="Laguna"
+                          icon="map-outline"
+                          text={text}
+                          mutedText={mutedText}
+                          border={border}
+                          inputBg={inputBg}
+                          accent={accent}
+                        />
+                      </View>
+                    </View>
+                    <SimpleInputField
+                      label="Postal Code *"
+                      value={postalCode}
+                      onChangeText={setPostalCode}
+                      placeholder="4027"
+                      icon="mailbox-outline"
+                      keyboardType="number-pad"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
+                    <View style={styles.simpleFieldWrap}>
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>MOBILE PHONE *</Text>
+                      <View style={[styles.simpleInputRow, { backgroundColor: inputBg, borderColor: border, paddingLeft: 6 }]}>
+                        <Pressable
+                          onPress={() => setCountryPickerVisible(true)}
+                          style={[styles.phonePrefixPill, { borderRightColor: border }]}
+                          accessibilityRole="button"
+                          accessibilityLabel="Choose phone country code"
+                        >
+                          <CountryFlag country={country} fallback={PHONE_COUNTRIES[0]} style={styles.inputFlagSmall} />
+                          <Text style={[styles.phonePrefixPillText, { color: text }]}>{country.code}</Text>
+                          <Icon name="menu-down" size={14} color={mutedText} />
+                        </Pressable>
+                        <TextInput
+                          value={phone}
+                          onChangeText={setPhone}
+                          placeholder="912 345 6789"
+                          placeholderTextColor={mutedText}
+                          keyboardType="phone-pad"
+                          style={[styles.simpleInputText, { color: text, flex: 1, paddingLeft: 8 }]}
+                          accessibilityLabel="Mobile phone number"
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.signInActionsGroup}>
+                      <Pressable
+                        onPress={submit}
+                        disabled={isSaving}
+                        style={styles.signInSubmitButton}
+                        accessibilityRole="button"
+                      >
+                        <LinearGradient
+                          colors={['#0F4C5C', '#1D7287']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.signInGradientButton}
+                        >
+                          {isSaving ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                          ) : (
+                            <>
+                              <Icon name="account-plus-outline" size={20} color="#FFFFFF" />
+                              <Text style={styles.signInGradientButtonText}>Create Account</Text>
+                            </>
+                          )}
+                        </LinearGradient>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {
+                          setMode('signIn');
+                          setNotice('');
+                        }}
+                        style={styles.switchAccountMode}
+                        accessibilityRole="link"
+                      >
+                        <Text style={[styles.switchAccountModeText, { color: accent }]}>
+                          Already have an account? Sign in
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <SimpleInputField
+                      label="Email Address"
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="you@calabarzon.ph"
+                      icon="email-outline"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      textContentType="emailAddress"
+                      text={text}
+                      mutedText={mutedText}
+                      border={border}
+                      inputBg={inputBg}
+                      accent={accent}
+                    />
 
-                  {/* Instant Demo Explorer Button */}
-                  <Pressable
-                    onPress={handleDemoLogin}
-                    disabled={isSaving}
-                    style={[styles.demoLoginButton, { borderColor: border }]}
-                    accessibilityRole="button"
-                  >
-                    <Icon name="flash-outline" size={18} color="#D99A1E" />
-                    <Text style={[styles.demoLoginButtonText, { color: text }]}>
-                      One-Click Demo Traveler Login
-                    </Text>
-                  </Pressable>
-                </View>
+                    <View style={styles.simpleFieldWrap}>
+                      <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>PASSWORD</Text>
+                      <View
+                        style={[
+                          styles.simpleInputRow,
+                          {
+                            backgroundColor: inputBg,
+                            borderColor: border,
+                          },
+                        ]}
+                      >
+                        <Icon name="lock-outline" size={18} color={mutedText} />
+                        <TextInput
+                          value={password}
+                          onChangeText={setPassword}
+                          placeholder="Enter password"
+                          placeholderTextColor="#8A9CA9"
+                          secureTextEntry={!showPassword}
+                          textContentType="password"
+                          style={[styles.simpleInputText, { color: text }]}
+                          accessibilityLabel="Password"
+                        />
+                        <Pressable
+                          onPress={() => setShowPassword(!showPassword)}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          <Icon
+                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                            size={18}
+                            color={mutedText}
+                          />
+                        </Pressable>
+                      </View>
+                      <Pressable
+                        onPress={() => setMode('forgotPassword')}
+                        style={styles.forgotPasswordLink}
+                        accessibilityRole="link"
+                      >
+                        <Text style={[styles.forgotPasswordText, { color: accent }]}>Forgot password?</Text>
+                      </Pressable>
+                    </View>
 
-                {/* Security Footer Note */}
-                <View style={styles.signInFooterNote}>
-                  <Icon name="shield-check-outline" size={15} color={colors.primary} />
-                  <Text style={[styles.signInFooterText, { color: mutedText }]}>
-                    Secure local account • Offline capable
-                  </Text>
-                </View>
+                    <View style={styles.signInActionsGroup}>
+                      <Pressable
+                        onPress={submit}
+                        disabled={isSaving}
+                        style={styles.signInSubmitButton}
+                        accessibilityRole="button"
+                      >
+                        <LinearGradient
+                          colors={['#0F4C5C', '#1D7287']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.signInGradientButton}
+                        >
+                          {isSaving ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                          ) : (
+                            <>
+                              <Icon name="login-variant" size={20} color="#FFFFFF" />
+                              <Text style={styles.signInGradientButtonText}>Sign In to Account</Text>
+                            </>
+                          )}
+                        </LinearGradient>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {
+                          setMode('signUp');
+                          setNotice('');
+                        }}
+                        style={styles.switchAccountMode}
+                        accessibilityRole="link"
+                      >
+                        <Text style={[styles.switchAccountModeText, { color: accent }]}>
+                          New here? Create an account
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </>
+                )}
               </View>
             </View>
           </View>
@@ -1980,29 +2289,6 @@ const styles = StyleSheet.create({
   },
 
   /* Edit Mode Fields */
-  editSectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  prefillChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(217, 154, 30, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(217, 154, 30, 0.4)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  prefillChipText: {
-    color: '#D99A1E',
-    fontSize: 11,
-    fontWeight: '700',
-    fontFamily: fonts.sans,
-  },
   simpleFieldWrap: {
     gap: 4,
   },
@@ -2226,8 +2512,26 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   signInActionsGroup: {
-    gap: 12,
     marginTop: 6,
+  },
+  switchAccountMode: {
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingTop: 16,
+  },
+  switchAccountModeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: fonts.sans,
+  },
+  forgotPasswordLink: {
+    alignSelf: 'flex-end',
+    paddingTop: 8,
+  },
+  forgotPasswordText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: fonts.sans,
   },
   signInSubmitButton: {
     borderRadius: 14,
@@ -2251,33 +2555,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: fonts.sans,
   },
-  demoLoginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderRadius: 14,
-    minHeight: 48,
-    paddingHorizontal: 12,
-  },
-  demoLoginButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: fonts.sans,
-  },
-  signInFooterNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 10,
-  },
-  signInFooterText: {
-    fontSize: 12,
-    fontFamily: fonts.sans,
-  },
-
   /* ------------------- TOAST NOTIFICATION ------------------- */
   floatingToast: {
     position: 'absolute',
