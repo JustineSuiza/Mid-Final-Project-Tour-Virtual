@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 // Browser photos can be several MB, so shrink them before they go into the database.
 function shrinkOnWeb(uri, maxSide = 1280, quality = 0.7) {
@@ -20,13 +20,35 @@ function shrinkOnWeb(uri, maxSide = 1280, quality = 0.7) {
 
 // Returns photos as data URIs so they are stored inside the database on every platform.
 export async function pickPhotos(multiple) {
-  const res = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    allowsMultipleSelection: multiple,
+  if (Platform.OS === 'web') {
+    const files = await new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = multiple;
+      input.onchange = () => resolve(Array.from(input.files || []));
+      input.click();
+    });
+    const images = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Could not read the selected image.'));
+      reader.readAsDataURL(file);
+    })));
+    return Promise.all(images.map((uri) => shrinkOnWeb(uri)));
+  }
+
+  const result = await launchImageLibrary({
+    mediaType: 'photo',
+    selectionLimit: multiple ? 0 : 1,
     quality: 0.4,
-    base64: Platform.OS !== 'web',
+    includeBase64: true,
   });
-  if (res.canceled) return [];
-  if (Platform.OS === 'web') return Promise.all(res.assets.map((a) => shrinkOnWeb(a.uri)));
-  return res.assets.map((a) => (a.base64 ? `data:${a.mimeType || 'image/jpeg'};base64,${a.base64}` : a.uri));
+  if (result.didCancel) return [];
+  if (result.errorCode) {
+    throw new Error(result.errorMessage || `Image selection failed (${result.errorCode}).`);
+  }
+  return (result.assets || []).map((asset) => (
+    asset.base64 ? `data:${asset.type || 'image/jpeg'};base64,${asset.base64}` : asset.uri
+  )).filter(Boolean);
 }

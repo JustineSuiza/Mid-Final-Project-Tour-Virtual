@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Image } from 'expo-image';
-import { useFonts } from 'expo-font';
-import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DestinationImage from '../components/DestinationImage';
@@ -36,9 +34,6 @@ export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { surface, text, mutedText, background } = useAppTheme();
   const { currentUser } = useAccount();
-  const [fontsLoaded] = useFonts({
-    GalaDisplay: require('../../font/CfMidnightRegular-MJ8B.ttf'),
-  });
   const [home, setHome] = useState({ categoryImages: {}, upNext: [] });
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
@@ -138,13 +133,13 @@ export default function HomeScreen({ navigation }) {
           <Image
             source={require('../../images/flag.gif')}
             style={[styles.flag, { top: Math.max(16, insets.top + 4) }]}
-            contentFit="cover"
+            resizeMode="cover"
             accessibilityLabel="Philippine flag"
           />
         </ImageBackground>
 
           <View style={styles.intro}>
-            <Text style={[styles.title, { color: text, fontFamily: fontsLoaded ? 'GalaDisplay' : fonts.sans }]}>
+            <Text style={[styles.title, { color: text, fontFamily: 'GalaDisplay' }]}>
               Gala <Text style={[styles.titleAccent, { color: colors.gold }]}>Tour App</Text>
             </Text>
             <Text style={[styles.sub, { color: '#000000' }]}>

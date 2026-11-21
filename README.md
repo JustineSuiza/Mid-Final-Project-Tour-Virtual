@@ -1,47 +1,32 @@
 # Gala Tour — CALABARZON Virtual Tour and Cultural Mapping App
 
-React Native (Expo) app with a local SQLite database.
+React Native CLI app with Firebase Firestore as the online database.
 
 ## Install and run
 
 ```bash
 npm install
-npm start
 ```
 
-Scan the QR code with Expo Go on your phone. On first launch the database is created and filled with 8 starter destinations and 24 quiz questions.
-
-## Run it on a PC (browser)
-
-Native and web dependencies are included in `package.json`. Start the app in a desktop browser:
+Create `.env` from `.env.example` and fill in the Firebase web app settings (`FIREBASE_*`) and optional Mapbox public token. In Firebase Console, create a Firestore database and add rules appropriate for your project.
 
 ```bash
-npm run web
+npm run android
 ```
 
-This opens the app at `http://localhost:8081`.
+This builds and launches the app on a connected Android device or emulator. On first launch, seed destinations/questions are written to Firestore if the collection is empty.
 
-To publish it as a website (Netlify, Vercel, GitHub Pages, or your school server):
+To build a release APK locally on Windows:
 
 ```bash
-npm run build:web   # creates a dist/ folder of static files
+npm run build:apk
 ```
 
-Upload the `dist/` folder to any static host. Students then open the link on a PC or a phone, with nothing to install.
+The APK is written to `android/app/build/outputs/apk/release/app-release.apk`. Install it on an Android device or share the file for download.
 
-Use **Settings → Appearance** to toggle light and dark themes. Your choice is saved on the device. On supported browsers, the page reveals the new theme from the toggle button with a circular transition; reduced-motion settings disable that animation.
+Use **Settings → Appearance** to toggle light and dark themes. Your choice is saved on the device.
 
-What differs on the web:
-
-| Feature | Phone | PC browser |
-|---|---|---|
-| Database | SQLite (`db/database.js`) | IndexedDB (`db/database.web.js`), same functions |
-| 360° tour | WebView | iframe, plus an "Open in new tab" button for sites that block embedding |
-| Delete confirmation | Native alert | Browser confirm box |
-| Photo gallery | Swipe | Swipe, or the arrow buttons |
-| Layout | Full width | Centered column, max 900 px (`MAX_WIDTH` in `src/theme.js`) |
-
-**Data is stored per device and per browser.** Records added on a PC do not appear on a phone, and clearing browser data erases them. Syncing across devices would need an online backend such as Supabase or Firebase.
+**Data is stored online in Firebase Firestore.** Devices/browsers using the same Firebase project see the same data, subject to your Firestore rules.
 
 ## Requirement checklist
 
@@ -51,7 +36,7 @@ What differs on the web:
 | **P1-2 Destination information** | Name, description, address, category, and image on the card, detail, and form screens |
 | **P1-3 Search and filter** | `DestinationListScreen`: search box and category chips, run as SQL `LIKE` and `WHERE` queries |
 | **P1-4 Navigation** | Bottom tabs (Destinations, Home, Progress, Settings) plus a stack to Detail, Form, Tour, Quiz |
-| **P1-5 Database** | `expo-sqlite`; tables `destinations`, `quiz_questions`, `progress`, `quiz_attempts` |
+| **P1-5 Database** | Firebase Firestore collections: `destinations`, `quiz_questions`, `progress`, `quiz_attempts`, `meta` (`src/db/database.js`) |
 | **P2-1 Virtual tour** | `VirtualTourScreen`: swipeable photos, History, Cultural significance, optional 360° link (`Tour360Screen`) |
 | **P2-2 Quiz** | `QuizScreen`: multiple choice, instant feedback, score computed and shown at the end. `QuizEditorScreen` adds or removes questions |
 | **P2-3 Progress** | `ProgressScreen`: completed destinations, best score per destination, recent attempts |

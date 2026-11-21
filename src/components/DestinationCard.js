@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import DestinationImage from './DestinationImage';
 import { useAppTheme } from '../ThemeContext';
 import { categoryMeta, colors, fonts } from '../theme';

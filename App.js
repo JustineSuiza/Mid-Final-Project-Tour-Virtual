@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Text, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator, Platform, StatusBar, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initDatabase } from './src/db/database';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -27,9 +26,9 @@ function AppContent() {
   return (
     <>
       <StatusBar
-        style={showIntro || isDark ? 'light' : 'dark'}
+        barStyle={showIntro || isDark ? 'light-content' : 'dark-content'}
         translucent={showIntro}
-        backgroundColor={showIntro ? 'transparent' : undefined}
+        backgroundColor={showIntro ? 'transparent' : background}
       />
       <View style={{
         flex: 1,
@@ -53,14 +52,22 @@ export default function App() {
   useEffect(() => {
     initDatabase()
       .then(() => setReady(true))
-      .catch((e) => setError(e));
+      .catch((e) => {
+        console.error('Database init failed', e);
+        setError(e);
+      });
   }, []);
 
   if (error) {
+    const msg = String(error?.message || error || 'Unknown error');
+    const details = error?.code ? `${error.code}: ${msg}` : msg;
     return (
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: colors.paper }}>
-        <Text style={{ color: colors.danger, fontSize: 16 }}>
-          The database could not be opened: {String(error.message || error)}
+        <Text style={{ color: colors.danger, fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
+          App failed to start
+        </Text>
+        <Text style={{ color: colors.ink, fontSize: 14, lineHeight: 20 }}>
+          {details}
         </Text>
       </View>
     );

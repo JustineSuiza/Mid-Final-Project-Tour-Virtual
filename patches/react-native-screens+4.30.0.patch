@@ -1,0 +1,10 @@
+diff --git a/node_modules/react-native-screens/android/CMakeLists.txt b/node_modules/react-native-screens/android/CMakeLists.txt
+index 91dc68e..b4fe71d 100644
+--- a/node_modules/react-native-screens/android/CMakeLists.txt
++++ b/node_modules/react-native-screens/android/CMakeLists.txt
+@@ -34,4 +34,5 @@ target_link_libraries(rnscreens
+     ReactAndroid::jsi
+     fbjni::fbjni
+     android
++    c++_shared
+ )

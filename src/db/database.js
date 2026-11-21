@@ -1,105 +1,123 @@
-import * as SQLite from 'expo-sqlite';
+import {
+  collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where, writeBatch,
+} from 'firebase/firestore';
+import { firestore } from '../firebase';
 import { LEGACY_QUIZ_QUESTIONS, SEED_DESTINATIONS } from './seed';
 import { PASS_MARK } from '../theme';
 import { buildDashboard } from '../utils/progressStats';
 
-let dbPromise = null;
-function getDb() {
-  if (!dbPromise) dbPromise = SQLite.openDatabaseAsync('calabarzon_tour.db');
-  return dbPromise;
-}
+const META_DOC = doc(firestore, 'meta', 'app');
+const destinationsCol = collection(firestore, 'destinations');
+const questionsCol = collection(firestore, 'quiz_questions');
+const progressCol = collection(firestore, 'progress');
+const attemptsCol = collection(firestore, 'quiz_attempts');
 
-// Columns used by list screens. Long text and the photo gallery are left out on purpose.
-const LIST_SELECT = `d.id, d.name, d.description, d.address, d.province, d.category, d.imageUri,
-  d.latitude, d.longitude, COALESCE(p.completed, 0) AS completed, p.bestScore, p.totalQuestions`;
-const LIST_FROM = `FROM destinations d LEFT JOIN progress p ON p.destinationId = d.id`;
+const num = (v) => (v === undefined || v === null || v === '' ? null : Number(v));
+const str = (v, fallback = '') => (v === undefined || v === null ? fallback : String(v));
+const asId = (id) => String(id);
 
+const parseOptions = (value) => {
+  if (Array.isArray(value)) return value;
+  try { return JSON.parse(value) || []; } catch { return []; }
+};
 const parsePhotos = (value) => {
-  try {
-    return JSON.parse(value) || [];
-  } catch {
-    return [];
-  }
+  if (Array.isArray(value)) return value;
+  try { return JSON.parse(value) || []; } catch { return []; }
 };
 
-/* ------------------------------ setup ------------------------------ */
+const destDoc = (id) => doc(firestore, 'destinations', asId(id));
+const questionDoc = (id) => doc(firestore, 'quiz_questions', asId(id));
+const progressDoc = (id) => doc(firestore, 'progress', asId(id));
+const attemptDoc = (id) => doc(firestore, 'quiz_attempts', asId(id));
 
-export async function initDatabase() {
-  const db = await getDb();
-  await db.execAsync(`
-    PRAGMA foreign_keys = ON;
-    CREATE TABLE IF NOT EXISTS destinations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      description TEXT NOT NULL,
-      address TEXT NOT NULL,
-      province TEXT,
-      category TEXT NOT NULL,
-      imageUri TEXT,
-      latitude REAL,
-      longitude REAL,
-      history TEXT,
-      significance TEXT,
-      tourUrl TEXT,
-      photos TEXT DEFAULT '[]',
-      createdAt TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS quiz_questions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      destinationId INTEGER NOT NULL REFERENCES destinations(id) ON DELETE CASCADE,
-      question TEXT NOT NULL,
-      options TEXT NOT NULL,
-      answerIndex INTEGER NOT NULL,
-      explanation TEXT
-    );
-    CREATE TABLE IF NOT EXISTS progress (
-      destinationId INTEGER PRIMARY KEY REFERENCES destinations(id) ON DELETE CASCADE,
-      completed INTEGER NOT NULL DEFAULT 0,
-      bestScore INTEGER,
-      totalQuestions INTEGER,
-      attempts INTEGER NOT NULL DEFAULT 0,
-      completedAt TEXT
-    );
-    CREATE TABLE IF NOT EXISTS quiz_attempts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      destinationId INTEGER NOT NULL REFERENCES destinations(id) ON DELETE CASCADE,
-      score INTEGER NOT NULL,
-      total INTEGER NOT NULL,
-      takenAt TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  // user_version lets us seed once, even if the person later deletes every record.
-  const v = await db.getFirstAsync('PRAGMA user_version');
-  if (v.user_version === 0) {
-    await seedDatabase(db);
-    await db.execAsync('PRAGMA user_version = 1');
-  }
-
-  // Older installs were created before map coordinates existed.
-  const columns = (await db.getAllAsync('PRAGMA table_info(destinations)')).map((c) => c.name);
-  if (!columns.includes('latitude')) await db.execAsync('ALTER TABLE destinations ADD COLUMN latitude REAL');
-  if (!columns.includes('longitude')) await db.execAsync('ALTER TABLE destinations ADD COLUMN longitude REAL');
-
-  for (const d of SEED_DESTINATIONS) {
-    if (d.latitude != null && d.longitude != null) {
-      await db.runAsync(
-        `UPDATE destinations SET latitude = ?, longitude = ?
-          WHERE name = ? AND (latitude IS NULL OR longitude IS NULL)`,
-        [d.latitude, d.longitude, d.name]
-      );
-    }
-    if (d.imageUri) {
-      await db.runAsync(
-        `UPDATE destinations SET imageUri = ?
-          WHERE name = ? AND (imageUri IS NULL OR imageUri = '')`,
-        [d.imageUri, d.name]
-      );
-    }
-  }
-
-  await syncLegacyQuizzes(db);
+function cleanDestination(d, id) {
+  return {
+    id: asId(id),
+    name: str(d.name).trim(),
+    description: str(d.description).trim(),
+    address: str(d.address).trim(),
+    province: str(d.province).trim(),
+    category: str(d.category).trim(),
+    imageUri: d.imageUri || null,
+    latitude: num(d.latitude),
+    longitude: num(d.longitude),
+    history: d.history || null,
+    significance: d.significance || null,
+    tourUrl: d.tourUrl || null,
+    photos: parsePhotos(d.photos),
+    createdAt: d.createdAt || new Date().toISOString(),
+  };
 }
+
+function cleanQuestion(q, id) {
+  return {
+    id: asId(id),
+    destinationId: asId(q.destinationId),
+    question: str(q.question),
+    options: parseOptions(q.options),
+    answerIndex: Number(q.answerIndex),
+    explanation: q.explanation || null,
+    createdAt: q.createdAt || null,
+  };
+}
+
+function cleanProgress(p, id) {
+  return {
+    destinationId: asId(id ?? p.destinationId),
+    completed: p.completed ? 1 : 0,
+    bestScore: p.bestScore ?? null,
+    totalQuestions: p.totalQuestions ?? null,
+    attempts: Number(p.attempts || 0),
+    completedAt: p.completedAt || null,
+  };
+}
+
+function cleanAttempt(a, id) {
+  return {
+    id: asId(id),
+    destinationId: asId(a.destinationId),
+    score: Number(a.score || 0),
+    total: Number(a.total || 0),
+    takenAt: a.takenAt || new Date().toISOString(),
+  };
+}
+
+async function getMeta() {
+  const snap = await getDoc(META_DOC);
+  return snap.exists() ? snap.data() : {};
+}
+
+async function nextId(field) {
+  const meta = await getMeta();
+  const counters = { ...(meta.counters || {}) };
+  const n = Number(counters[field] || 1);
+  counters[field] = n + 1;
+  await setDoc(META_DOC, { ...meta, counters }, { merge: true });
+  return String(n);
+}
+
+async function getAllDestinations() {
+  const snap = await getDocs(destinationsCol);
+  return snap.docs.map((d) => cleanDestination(d.data(), d.id));
+}
+async function getAllQuestions() {
+  const snap = await getDocs(questionsCol);
+  return snap.docs.map((d) => cleanQuestion(d.data(), d.id));
+}
+async function getAllProgress() {
+  const snap = await getDocs(progressCol);
+  return snap.docs.map((d) => cleanProgress(d.data(), d.id));
+}
+async function getAllAttempts() {
+  const snap = await getDocs(attemptsCol);
+  return snap.docs.map((d) => cleanAttempt(d.data(), d.id));
+}
+
+const listRow = (d, p) => ({
+  id: d.id, name: d.name, description: d.description, address: d.address, province: d.province,
+  category: d.category, imageUri: d.imageUri, latitude: d.latitude ?? null, longitude: d.longitude ?? null,
+  completed: p?.completed ? 1 : 0, bestScore: p?.bestScore ?? null, totalQuestions: p?.totalQuestions ?? null,
+});
 
 function sameQuiz(existing, seedQuiz) {
   if (existing.length !== seedQuiz.length) return false;
@@ -107,271 +125,253 @@ function sameQuiz(existing, seedQuiz) {
     const seed = seedQuiz[i];
     return q.question === seed.question
       && q.answerIndex === seed.answerIndex
-      && q.options === JSON.stringify(seed.options);
+      && JSON.stringify(q.options) === JSON.stringify(seed.options);
   });
 }
 
-async function syncLegacyQuizzes(db) {
-  for (const dest of SEED_DESTINATIONS) {
-    const legacySets = LEGACY_QUIZ_QUESTIONS[dest.name];
+/* ------------------------------ setup ------------------------------ */
+
+export async function initDatabase() {
+  const meta = await getMeta();
+  if (meta.seeded) {
+    await syncSeedMaintenance();
+    return;
+  }
+  const existing = await getDocs(destinationsCol);
+  if (!existing.empty) {
+    await setDoc(META_DOC, { seeded: true }, { merge: true });
+    await syncSeedMaintenance();
+    return;
+  }
+  await seedDatabase();
+  await setDoc(META_DOC, { seeded: true, counters: await computeCounters() }, { merge: true });
+}
+
+async function computeCounters() {
+  const [dests, questions, attempts] = await Promise.all([getAllDestinations(), getAllQuestions(), getAllAttempts()]);
+  const maxNum = (arr) => arr.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0);
+  return { destination: maxNum(dests) + 1, question: maxNum(questions) + 1, attempt: maxNum(attempts) + 1 };
+}
+
+async function seedDatabase() {
+  let destination = 1, question = 1;
+  for (const d of SEED_DESTINATIONS) {
+    const id = String(destination++);
+    await setDoc(destDoc(id), cleanDestination({ ...d, photos: [] }, id));
+    for (const q of d.quiz) {
+      const qid = String(question++);
+      await setDoc(questionDoc(qid), cleanQuestion({ ...q, destinationId: id, createdAt: new Date().toISOString() }, qid));
+    }
+  }
+  await setDoc(META_DOC, { counters: { destination, question, attempt: 1 } }, { merge: true });
+}
+
+async function syncSeedMaintenance() {
+  const [dests, questions] = await Promise.all([getAllDestinations(), getAllQuestions()]);
+  const byName = new Map(dests.map((d) => [d.name, d]));
+
+  for (const seed of SEED_DESTINATIONS) {
+    const dest = byName.get(seed.name);
+    if (!dest) continue;
+    const patch = {};
+    if (seed.latitude != null && dest.latitude == null) patch.latitude = seed.latitude;
+    if (seed.longitude != null && dest.longitude == null) patch.longitude = seed.longitude;
+    if (seed.imageUri && !dest.imageUri) patch.imageUri = seed.imageUri;
+    if (Object.keys(patch).length) await updateDoc(destDoc(dest.id), patch);
+  }
+
+  for (const seed of SEED_DESTINATIONS) {
+    const legacySets = LEGACY_QUIZ_QUESTIONS[seed.name];
     if (!legacySets) continue;
-    const row = await db.getFirstAsync(
-      'SELECT id FROM destinations WHERE name = ? ORDER BY id LIMIT 1',
-      [dest.name]
-    );
-    if (!row) continue;
-    const existing = await db.getAllAsync(
-      'SELECT question, options, answerIndex FROM quiz_questions WHERE destinationId = ? ORDER BY id',
-      [row.id]
-    );
-    if (sameQuiz(existing, dest.quiz)) continue;
+    const dest = byName.get(seed.name);
+    if (!dest) continue;
+    const existing = questions.filter((q) => q.destinationId === dest.id).sort((a, b) => Number(a.id) - Number(b.id));
+    if (sameQuiz(existing, seed.quiz)) continue;
     const legacyMatch = legacySets.some((legacy) =>
       existing.length === legacy.length && existing.every((q, i) => q.question === legacy[i])
     );
     if (!legacyMatch) continue;
-    await db.withTransactionAsync(async () => {
-      await db.runAsync('DELETE FROM quiz_attempts WHERE destinationId = ?', [row.id]);
-      await db.runAsync('DELETE FROM progress WHERE destinationId = ?', [row.id]);
-      await db.runAsync('DELETE FROM quiz_questions WHERE destinationId = ?', [row.id]);
-      for (const q of dest.quiz) {
-        await db.runAsync(
-          `INSERT INTO quiz_questions (destinationId, question, options, answerIndex, explanation)
-           VALUES (?, ?, ?, ?, ?)`,
-          [row.id, q.question, JSON.stringify(q.options), q.answerIndex, q.explanation]
-        );
-      }
-    });
-  }
-}
 
-async function seedDatabase(db) {
-  await db.withTransactionAsync(async () => {
-    for (const d of SEED_DESTINATIONS) {
-      const r = await db.runAsync(
-        `INSERT INTO destinations
-           (name, description, address, province, category, imageUri, latitude, longitude, history, significance, tourUrl, photos)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [d.name, d.description, d.address, d.province, d.category, d.imageUri || null, d.latitude ?? null, d.longitude ?? null, d.history, d.significance, null, '[]']
-      );
-      for (const q of d.quiz) {
-        await db.runAsync(
-          `INSERT INTO quiz_questions (destinationId, question, options, answerIndex, explanation)
-           VALUES (?, ?, ?, ?, ?)`,
-          [r.lastInsertRowId, q.question, JSON.stringify(q.options), q.answerIndex, q.explanation]
-        );
-      }
+    const batch = writeBatch(firestore);
+    existing.forEach((q) => batch.delete(questionDoc(q.id)));
+    const [attempts, progress] = await Promise.all([getAllAttempts(), getAllProgress()]);
+    attempts.filter((a) => a.destinationId === dest.id).forEach((a) => batch.delete(attemptDoc(a.id)));
+    if (progress.find((p) => p.destinationId === dest.id)) batch.delete(progressDoc(dest.id));
+    let qidCounter = Number((await getMeta()).counters?.question || 1);
+    for (const q of seed.quiz) {
+      const qid = String(qidCounter++);
+      batch.set(questionDoc(qid), cleanQuestion({ ...q, destinationId: dest.id, createdAt: new Date().toISOString() }, qid));
     }
-  });
+    await batch.commit();
+    await setDoc(META_DOC, { counters: { ...(await getMeta()).counters, question: qidCounter } }, { merge: true });
+  }
 }
 
 /* ----------------------- destinations (CRUD) ----------------------- */
 
 export async function getDestinations({ search = '', category = 'All' } = {}) {
-  const db = await getDb();
-  const like = `%${search}%`;
-  const selectedCategories = Array.isArray(category)
-    ? category
-    : category === 'All' ? [] : [category];
-  const categoryFilter = selectedCategories.length
-    ? `AND d.category IN (${selectedCategories.map(() => '?').join(', ')})`
-    : '';
-  return db.getAllAsync(
-    `SELECT ${LIST_SELECT} ${LIST_FROM}
-     WHERE 1 = 1 ${categoryFilter}
-       AND (d.name LIKE ? OR d.description LIKE ? OR d.address LIKE ? OR d.province LIKE ?)
-     ORDER BY d.name COLLATE NOCASE`,
-    [...selectedCategories, like, like, like, like]
-  );
+  const needle = search.toLowerCase();
+  const selectedCategories = Array.isArray(category) ? category : category === 'All' ? [] : [category];
+  const [dests, progress] = await Promise.all([getAllDestinations(), getAllProgress()]);
+  const pmap = new Map(progress.map((p) => [p.destinationId, p]));
+  return dests
+    .filter((d) => selectedCategories.length === 0 || selectedCategories.includes(d.category))
+    .filter((d) => [d.name, d.description, d.address, d.province].some((f) => (f || '').toLowerCase().includes(needle)))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((d) => listRow(d, pmap.get(d.id)));
 }
 
 export async function getDestination(id) {
-  const db = await getDb();
-  const row = await db.getFirstAsync('SELECT * FROM destinations WHERE id = ?', [id]);
-  return row ? { ...row, photos: parsePhotos(row.photos) } : null;
+  const snap = await getDoc(destDoc(id));
+  return snap.exists() ? cleanDestination(snap.data(), snap.id) : null;
 }
 
 export async function createDestination(d) {
-  const db = await getDb();
-  const r = await db.runAsync(
-    `INSERT INTO destinations
-       (name, description, address, province, category, imageUri, latitude, longitude, history, significance, tourUrl, photos)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      d.name, d.description, d.address, d.province, d.category,
-      d.imageUri || null, d.latitude ?? null, d.longitude ?? null,
-      d.history || null, d.significance || null,
-      d.tourUrl || null, JSON.stringify(d.photos || []),
-    ]
-  );
-  return r.lastInsertRowId;
+  const id = await nextId('destination');
+  await setDoc(destDoc(id), cleanDestination({ ...d, createdAt: new Date().toISOString() }, id));
+  return id;
 }
 
 export async function updateDestination(id, d) {
-  const db = await getDb();
-  await db.runAsync(
-    `UPDATE destinations
-        SET name = ?, description = ?, address = ?, province = ?, category = ?, imageUri = ?,
-            history = ?, significance = ?, tourUrl = ?, photos = ?
-      WHERE id = ?`,
-    [
-      d.name, d.description, d.address, d.province, d.category,
-      d.imageUri || null, d.history || null, d.significance || null,
-      d.tourUrl || null, JSON.stringify(d.photos || []), id,
-    ]
-  );
+  const ref = destDoc(id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const existing = cleanDestination(snap.data(), snap.id);
+  const next = cleanDestination({ ...existing, ...d, id: asId(id), createdAt: existing.createdAt }, id);
+  await setDoc(ref, next);
 }
 
 export async function deleteDestination(id) {
-  const db = await getDb();
-  await db.withTransactionAsync(async () => {
-    await db.runAsync('DELETE FROM quiz_attempts WHERE destinationId = ?', [id]);
-    await db.runAsync('DELETE FROM progress WHERE destinationId = ?', [id]);
-    await db.runAsync('DELETE FROM quiz_questions WHERE destinationId = ?', [id]);
-    await db.runAsync('DELETE FROM destinations WHERE id = ?', [id]);
-  });
+  const did = asId(id);
+  const [questions, attempts, progress] = await Promise.all([getAllQuestions(), getAllAttempts(), getAllProgress()]);
+  const batch = writeBatch(firestore);
+  questions.filter((q) => q.destinationId === did).forEach((q) => batch.delete(questionDoc(q.id)));
+  attempts.filter((a) => a.destinationId === did).forEach((a) => batch.delete(attemptDoc(a.id)));
+  if (progress.find((p) => p.destinationId === did)) batch.delete(progressDoc(did));
+  batch.delete(destDoc(did));
+  await batch.commit();
 }
 
 export async function getHomeData() {
-  const db = await getDb();
-  const total = (await db.getFirstAsync('SELECT COUNT(*) AS n FROM destinations')).n;
-  const completed = (
-    await db.getFirstAsync(
-      `SELECT COUNT(*) AS n FROM progress p JOIN destinations d ON d.id = p.destinationId WHERE p.completed = 1`
-    )
-  ).n;
-  const rows = await db.getAllAsync('SELECT category, COUNT(*) AS n FROM destinations GROUP BY category');
+  const [dests, progress] = await Promise.all([getAllDestinations(), getAllProgress()]);
+  const pmap = new Map(progress.map((p) => [p.destinationId, p]));
   const counts = {};
-  rows.forEach((r) => (counts[r.category] = r.n));
-  const imageRows = await db.getAllAsync(
-    `SELECT category, imageUri FROM destinations
-     WHERE imageUri IS NOT NULL AND imageUri != '' ORDER BY id`
-  );
+  dests.forEach((d) => (counts[d.category] = (counts[d.category] || 0) + 1));
   const categoryImages = {};
-  imageRows.forEach((r) => {
-    if (!categoryImages[r.category]) categoryImages[r.category] = r.imageUri;
-  });
-  const upNext = await db.getAllAsync(
-    `SELECT ${LIST_SELECT} ${LIST_FROM} WHERE COALESCE(p.completed, 0) = 0 ORDER BY d.id LIMIT 4`
-  );
-  return { total, completed, counts, categoryImages, upNext };
+  dests.forEach((d) => { if (d.imageUri && !categoryImages[d.category]) categoryImages[d.category] = d.imageUri; });
+  const completed = dests.filter((d) => pmap.get(d.id)?.completed === 1).length;
+  const upNext = dests
+    .filter((d) => pmap.get(d.id)?.completed !== 1)
+    .sort((a, b) => Number(a.id) - Number(b.id))
+    .slice(0, 4)
+    .map((d) => listRow(d, pmap.get(d.id)));
+  return { total: dests.length, completed, counts, categoryImages, upNext };
 }
 
 /* ------------------------------ quiz ------------------------------- */
 
 export async function getQuestions(destinationId) {
-  const db = await getDb();
-  const rows = await db.getAllAsync(
-    'SELECT * FROM quiz_questions WHERE destinationId = ? ORDER BY id',
-    [destinationId]
-  );
-  return rows.map((r) => ({ ...r, options: JSON.parse(r.options) }));
+  const did = asId(destinationId);
+  const snap = await getDocs(query(questionsCol, where('destinationId', '==', did)));
+  return snap.docs.map((d) => cleanQuestion(d.data(), d.id)).sort((a, b) => Number(a.id) - Number(b.id));
 }
 
 export async function getQuestionCount(destinationId) {
-  const db = await getDb();
-  const r = await db.getFirstAsync(
-    'SELECT COUNT(*) AS n FROM quiz_questions WHERE destinationId = ?',
-    [destinationId]
-  );
-  return r.n;
+  const did = asId(destinationId);
+  const snap = await getDocs(query(questionsCol, where('destinationId', '==', did)));
+  return snap.size;
 }
 
 export async function addQuestion(destinationId, { question, options, answerIndex, explanation }) {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO quiz_questions (destinationId, question, options, answerIndex, explanation)
-     VALUES (?, ?, ?, ?, ?)`,
-    [destinationId, question, JSON.stringify(options), answerIndex, explanation || null]
-  );
+  const id = await nextId('question');
+  await setDoc(questionDoc(id), cleanQuestion({
+    destinationId: asId(destinationId), question, options: [...options],
+    answerIndex, explanation: explanation || null, createdAt: new Date().toISOString(),
+  }, id));
 }
 
 export async function deleteQuestion(id) {
-  const db = await getDb();
-  await db.runAsync('DELETE FROM quiz_questions WHERE id = ?', [id]);
+  await deleteDoc(questionDoc(id));
 }
 
 /* --------------------------- progress ------------------------------ */
 
 export async function getProgress(destinationId) {
-  const db = await getDb();
-  return db.getFirstAsync('SELECT * FROM progress WHERE destinationId = ?', [destinationId]);
+  const snap = await getDoc(progressDoc(destinationId));
+  return snap.exists() ? cleanProgress(snap.data(), snap.id) : null;
 }
 
 export async function setCompleted(destinationId, completed) {
-  const db = await getDb();
-  await db.runAsync(
-    `INSERT INTO progress (destinationId, completed, completedAt) VALUES (?, ?, ?)
-     ON CONFLICT(destinationId) DO UPDATE SET completed = excluded.completed, completedAt = excluded.completedAt`,
-    [destinationId, completed ? 1 : 0, completed ? new Date().toISOString() : null]
-  );
+  const did = asId(destinationId);
+  const prev = await getProgress(did);
+  const next = cleanProgress({
+    destinationId: did,
+    completed: completed ? 1 : 0,
+    bestScore: prev?.bestScore ?? null,
+    totalQuestions: prev?.totalQuestions ?? null,
+    attempts: prev?.attempts || 0,
+    completedAt: completed ? new Date().toISOString() : null,
+  }, did);
+  await setDoc(progressDoc(did), next);
 }
 
-// Saves the attempt, keeps the best score, and marks the destination completed on a pass.
 export async function recordQuizAttempt(destinationId, score, total) {
-  const db = await getDb();
+  const did = asId(destinationId);
   const pct = total ? score / total : 0;
   const passed = pct >= PASS_MARK;
-  let best = { score, total };
+  const prev = await getProgress(did);
+  const prevPct = prev && prev.totalQuestions ? prev.bestScore / prev.totalQuestions : -1;
+  const best = prevPct >= pct ? { score: prev.bestScore, total: prev.totalQuestions } : { score, total };
+  const completed = (prev && prev.completed === 1) || passed ? 1 : 0;
 
-  await db.withTransactionAsync(async () => {
-    await db.runAsync(
-      'INSERT INTO quiz_attempts (destinationId, score, total) VALUES (?, ?, ?)',
-      [destinationId, score, total]
-    );
-    const prev = await db.getFirstAsync('SELECT * FROM progress WHERE destinationId = ?', [destinationId]);
-    const prevPct = prev && prev.totalQuestions ? prev.bestScore / prev.totalQuestions : -1;
-    if (prevPct >= pct) best = { score: prev.bestScore, total: prev.totalQuestions };
-
-    const completed = (prev && prev.completed === 1) || passed ? 1 : 0;
-    const completedAt = completed ? (prev && prev.completedAt) || new Date().toISOString() : null;
-    await db.runAsync(
-      `INSERT OR REPLACE INTO progress
-         (destinationId, completed, bestScore, totalQuestions, attempts, completedAt)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [destinationId, completed, best.score, best.total, ((prev && prev.attempts) || 0) + 1, completedAt]
-    );
-  });
-
+  const attemptId = await nextId('attempt');
+  await setDoc(attemptDoc(attemptId), cleanAttempt({
+    destinationId: did, score, total, takenAt: new Date().toISOString(),
+  }, attemptId));
+  await setDoc(progressDoc(did), cleanProgress({
+    destinationId: did, completed, bestScore: best.score, totalQuestions: best.total,
+    attempts: ((prev && prev.attempts) || 0) + 1,
+    completedAt: completed ? (prev && prev.completedAt) || new Date().toISOString() : null,
+  }, did));
   return { pct, passed, best };
 }
 
 export async function getProgressSummary() {
-  const db = await getDb();
-  const destinations = await db.getAllAsync(
-    `SELECT d.id, d.name, d.category,
-            COALESCE(p.completed, 0) AS completed, p.bestScore, p.totalQuestions,
-            COALESCE(p.attempts, 0) AS attempts
-       FROM destinations d LEFT JOIN progress p ON p.destinationId = d.id
-      ORDER BY completed DESC, d.name COLLATE NOCASE`
-  );
-  const recent = await db.getAllAsync(
-    `SELECT a.id, a.score, a.total, a.takenAt, d.name
-       FROM quiz_attempts a JOIN destinations d ON d.id = a.destinationId
-      ORDER BY a.id DESC LIMIT 8`
-  );
-  const completed = destinations.filter((d) => d.completed === 1).length;
+  const [dests, progress, attempts] = await Promise.all([getAllDestinations(), getAllProgress(), getAllAttempts()]);
+  const pmap = new Map(progress.map((p) => [p.destinationId, p]));
+  const destinations = dests.map((d) => {
+    const p = pmap.get(d.id);
+    return {
+      id: d.id, name: d.name, category: d.category,
+      completed: p?.completed ? 1 : 0, bestScore: p?.bestScore ?? null,
+      totalQuestions: p?.totalQuestions ?? null, attempts: p?.attempts || 0,
+    };
+  }).sort((a, b) => b.completed - a.completed || a.name.localeCompare(b.name));
+
+  const recent = [...attempts].sort((a, b) => Number(b.id) - Number(a.id)).slice(0, 8).map((a) => ({
+    id: a.id, score: a.score, total: a.total, takenAt: a.takenAt,
+    name: dests.find((d) => d.id === a.destinationId)?.name || 'Deleted destination',
+  }));
   const scored = destinations.filter((d) => d.totalQuestions);
-  const avgBest = scored.length
-    ? scored.reduce((sum, d) => sum + d.bestScore / d.totalQuestions, 0) / scored.length
-    : null;
-  return { total: destinations.length, completed, avgBest, destinations, recent };
+  const avgBest = scored.length ? scored.reduce((sum, d) => sum + d.bestScore / d.totalQuestions, 0) / scored.length : null;
+  return { total: destinations.length, completed: destinations.filter((d) => d.completed === 1).length, avgBest, destinations, recent };
 }
 
 export async function getProgressDashboard() {
-  const db = await getDb();
-  const destinations = await db.getAllAsync(
-    'SELECT id, name, category FROM destinations ORDER BY id'
-  );
-  const attempts = await db.getAllAsync(
-    `SELECT a.destinationId, a.score, a.total, d.category
-       FROM quiz_attempts a
-       JOIN destinations d ON d.id = a.destinationId
-      ORDER BY a.id ASC`
-  );
-  return buildDashboard(destinations, attempts);
+  const [dests, attempts] = await Promise.all([getAllDestinations(), getAllAttempts()]);
+  const destinations = dests.map((d) => ({ id: d.id, name: d.name, category: d.category })).sort((a, b) => Number(a.id) - Number(b.id));
+  const categories = new Map(destinations.map((d) => [d.id, d.category]));
+  const attemptRows = attempts
+    .filter((a) => categories.has(a.destinationId))
+    .sort((a, b) => Number(a.id) - Number(b.id))
+    .map((a) => ({ destinationId: a.destinationId, score: a.score, total: a.total, category: categories.get(a.destinationId) }));
+  return buildDashboard(destinations, attemptRows);
 }
 
 export async function resetProgress() {
-  const db = await getDb();
-  await db.execAsync('DELETE FROM quiz_attempts; DELETE FROM progress;');
+  const [attempts, progress] = await Promise.all([getAllAttempts(), getAllProgress()]);
+  const batch = writeBatch(firestore);
+  attempts.forEach((a) => batch.delete(attemptDoc(a.id)));
+  progress.forEach((p) => batch.delete(progressDoc(p.destinationId)));
+  await batch.commit();
 }

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Easing,
   Image,
@@ -13,8 +14,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { FontAwesome6, MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DatePickerModal from '../components/DatePickerModal';
 import { useAppTheme } from '../ThemeContext';
@@ -350,7 +352,11 @@ export default function AccountScreen() {
         setMode('profile');
         setNotice('Your Calabarzon Tour account has been created.');
       } catch (error) {
-        setNotice(error.message || 'Could not create your account.');
+        console.error('Create account failed', error);
+        const code = error?.code ? `${error.code}: ` : '';
+        const msg = `${code}${error?.message || 'Could not create your account.'}`;
+        setNotice(msg);
+        Alert.alert('Create account failed', msg);
       } finally {
         setIsSaving(false);
       }
@@ -373,7 +379,11 @@ export default function AccountScreen() {
       setMode('profile');
       setNotice('Welcome back! Signed into your Calabarzon Tour account.');
     } catch (error) {
-      setNotice(error.message || 'Could not complete sign in.');
+      console.error('Sign in failed', error);
+      const code = error?.code ? `${error.code}: ` : '';
+      const msg = `${code}${error?.message || 'Could not complete sign in.'}`;
+      setNotice(msg);
+      Alert.alert('Sign in failed', msg);
     } finally {
       setIsSaving(false);
     }

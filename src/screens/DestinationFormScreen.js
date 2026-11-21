@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
-import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Button from '../components/Button';
 import CategoryChip from '../components/CategoryChip';
 import DestinationImage from '../components/DestinationImage';

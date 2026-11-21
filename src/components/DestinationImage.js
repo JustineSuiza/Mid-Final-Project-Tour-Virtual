@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Image, View } from 'react-native';
-import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { categoryMeta } from '../theme';
 import { getDestinationImageSource } from '../utils/destinationImages';
 

@@ -1,4 +1,6 @@
-const MAPBOX_ACCESS_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+import Config from 'react-native-config';
+
+const MAPBOX_ACCESS_TOKEN = Config.MAPBOX_ACCESS_TOKEN || '';
 
 export function createDestinationMapHtml(destinations) {
   const places = destinations.filter(({ latitude, longitude }) =>
@@ -40,7 +42,7 @@ export function createDestinationMapHtml(destinations) {
       document.body.appendChild(message);
       if (!accessToken) {
         message.hidden = false;
-        message.textContent = 'Mapbox is not configured. Set EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN and restart Expo.';
+        message.textContent = 'Mapbox is not configured. Set MAPBOX_ACCESS_TOKEN in .env and rebuild the app.';
       } else {
         mapboxgl.accessToken = accessToken;
         const map = new mapboxgl.Map({

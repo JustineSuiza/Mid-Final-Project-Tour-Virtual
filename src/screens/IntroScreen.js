@@ -1,49 +1,54 @@
 import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import LinearGradient from 'react-native-linear-gradient';
+import Video from 'react-native-video';
 
 const introVideo = require('../../intro.mp4');
 const FOOTER_HEIGHT = 112;
 
+function NativeIntroVideo() {
+  return (
+    <Video
+      source={introVideo}
+      style={StyleSheet.absoluteFill}
+      resizeMode="cover"
+      repeat
+      muted
+      controls={false}
+    />
+  );
+}
+
+function WebIntroVideo() {
+  useEffect(() => {
+    const el = document.getElementById('gala-intro-video');
+    if (el) {
+      el.muted = true;
+      el.play().catch(() => {});
+    }
+  }, []);
+  return React.createElement('video', {
+    id: 'gala-intro-video',
+    src: typeof introVideo === 'string' ? introVideo : introVideo?.uri || introVideo?.default || introVideo,
+    autoPlay: true,
+    loop: true,
+    muted: true,
+    playsInline: true,
+    style: {
+      position: 'absolute',
+      top: 0, left: 0, width: '100%', height: '100%',
+      objectFit: 'cover',
+    },
+  });
+}
+
 export default function IntroScreen({ onExplore }) {
   const insets = useSafeAreaInsets();
-  const player = useVideoPlayer(introVideo, (videoPlayer) => {
-    videoPlayer.loop = true;
-    videoPlayer.muted = true;
-    videoPlayer.play();
-  });
-
-  useEffect(() => {
-    const subscription = player.addListener('statusChange', ({ status }) => {
-      if (status === 'readyToPlay') {
-        player.play();
-      }
-    });
-    const tryPlay = () => {
-      try {
-        player.play();
-      } catch {}
-    };
-    tryPlay();
-    const timer = setTimeout(tryPlay, 300);
-    return () => {
-      subscription.remove();
-      clearTimeout(timer);
-    };
-  }, [player]);
 
   return (
     <View style={styles.screen}>
-      <VideoView
-        player={player}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        nativeControls={false}
-        allowsFullscreen={false}
-        allowsPictureInPicture={false}
-      />
+      {Platform.OS === 'web' ? <WebIntroVideo /> : <NativeIntroVideo />}
       <LinearGradient
         pointerEvents="none"
         colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.04)', 'rgba(0,0,0,0.45)']}
