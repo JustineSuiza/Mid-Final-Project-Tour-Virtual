@@ -91,6 +91,7 @@ export default function AccountScreen() {
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
   const [city, setCity] = useState('');
@@ -351,7 +352,9 @@ export default function AccountScreen() {
         style={styles.scrollView}
         contentContainerStyle={[
           styles.contentContainer,
-          { paddingTop: insets.top, paddingBottom: insets.bottom + 48 },
+          mode === 'profile'
+            ? { paddingTop: insets.top, paddingBottom: insets.bottom + 48 }
+            : { paddingTop: 0, paddingBottom: Math.max(insets.bottom, 20) + 32, flexGrow: 1 },
         ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -975,97 +978,162 @@ export default function AccountScreen() {
           </>
         )}
 
-        {/* SIGN IN VIEW (When no user is logged in) */}
+        {/* SIGN IN VIEW (When no user is logged in - FULL SCREEN TOP NOTCH & DOWN TO FULL MOBILE) */}
         {!loading && mode !== 'profile' && (
           <View style={styles.signInCardWrap}>
             <LinearGradient
               colors={heroGradients}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.signInHeroHeader}
+              style={[
+                styles.signInHeroHeader,
+                { paddingTop: Math.max(insets.top, 24) + 24 },
+              ]}
             >
-              <View style={styles.signInEmblemRing}>
-                <Icon name="compass-outline" size={44} color="#F5B942" />
+              {/* Decorative background glow circles */}
+              <View style={styles.glowCircleTopRight} />
+              <View style={styles.glowCircleBottomLeft} />
+
+              <View style={styles.signInHeroInner}>
+                <View style={styles.signInEmblemRing}>
+                  <Icon name="compass-outline" size={46} color="#F5B942" />
+                </View>
+                <Text style={styles.signInHeroTitle}>Calabarzon Tour</Text>
+                <Text style={styles.signInHeroSubtitle}>Official Traveler Passport & Progression</Text>
+
+                {/* 5 Provinces Badges Strip */}
+                <View style={styles.provincePillsRow}>
+                  <View style={styles.provincePill}>
+                    <Text style={styles.provincePillText}>CAVITE</Text>
+                  </View>
+                  <View style={styles.provincePill}>
+                    <Text style={styles.provincePillText}>LAGUNA</Text>
+                  </View>
+                  <View style={styles.provincePill}>
+                    <Text style={styles.provincePillText}>BATANGAS</Text>
+                  </View>
+                  <View style={styles.provincePill}>
+                    <Text style={styles.provincePillText}>RIZAL</Text>
+                  </View>
+                  <View style={styles.provincePill}>
+                    <Text style={styles.provincePillText}>QUEZON</Text>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.signInHeroTitle}>Calabarzon Tour</Text>
-              <Text style={styles.signInHeroSubtitle}>Official Traveler Passport & Progression</Text>
             </LinearGradient>
 
-            <View style={[styles.signInFormCard, { backgroundColor: surface, borderColor: border }]}>
-              <Text style={[styles.signInSectionTitle, { color: text }]}>Welcome Traveler</Text>
-              <Text style={[styles.signInSectionSub, { color: mutedText }]}>
-                Sign in to save your personal details, progress records, and provincial quiz badges.
-              </Text>
+            <View style={[styles.signInFormCard, { backgroundColor: surface }]}>
+              <View style={styles.signInFormInner}>
+                <View style={styles.signInHeaderWrap}>
+                  <Text style={[styles.signInSectionTitle, { color: text }]}>Welcome Traveler</Text>
+                  <Text style={[styles.signInSectionSub, { color: mutedText }]}>
+                    Sign in to track your personal travel passport, recorded quiz scores, and province milestones.
+                  </Text>
+                </View>
 
-              {/* Email Input */}
-              <SimpleInputField
-                label="Email Address"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@calabarzon.ph"
-                icon="email-outline"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                textContentType="emailAddress"
-                text={text}
-                mutedText={mutedText}
-                border={border}
-                inputBg={inputBg}
-                accent={accent}
-              />
+                {/* Email Input */}
+                <SimpleInputField
+                  label="Email Address"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@calabarzon.ph"
+                  icon="email-outline"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  textContentType="emailAddress"
+                  text={text}
+                  mutedText={mutedText}
+                  border={border}
+                  inputBg={inputBg}
+                  accent={accent}
+                />
 
-              {/* Password Input */}
-              <SimpleInputField
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Enter password (any for demo)"
-                icon="lock-outline"
-                secureTextEntry
-                textContentType="password"
-                text={text}
-                mutedText={mutedText}
-                border={border}
-                inputBg={inputBg}
-                accent={accent}
-              />
+                {/* Password Input with Visibility Toggle */}
+                <View style={styles.simpleFieldWrap}>
+                  <Text style={[styles.fieldSmallLabel, { color: mutedText }]}>PASSWORD</Text>
+                  <View
+                    style={[
+                      styles.simpleInputRow,
+                      {
+                        backgroundColor: inputBg,
+                        borderColor: border,
+                      },
+                    ]}
+                  >
+                    <Icon name="lock-outline" size={18} color={mutedText} />
+                    <TextInput
+                      value={password}
+                      onChangeText={setPassword}
+                      placeholder="Enter password (any for demo)"
+                      placeholderTextColor="#8A9CA9"
+                      secureTextEntry={!showPassword}
+                      textContentType="password"
+                      style={[styles.simpleInputText, { color: text }]}
+                      accessibilityLabel="Password"
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      <Icon
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={18}
+                        color={mutedText}
+                      />
+                    </Pressable>
+                  </View>
+                </View>
 
-              {/* Sign In Button */}
-              <Pressable
-                onPress={submit}
-                disabled={isSaving}
-                style={styles.signInSubmitButton}
-                accessibilityRole="button"
-              >
-                <LinearGradient
-                  colors={['#0F4C5C', '#1D7287']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.signInGradientButton}
-                >
-                  {isSaving ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <>
-                      <Icon name="login-variant" size={20} color="#FFFFFF" />
-                      <Text style={styles.signInGradientButtonText}>Sign In</Text>
-                    </>
-                  )}
-                </LinearGradient>
-              </Pressable>
+                {/* Buttons Group */}
+                <View style={styles.signInActionsGroup}>
+                  {/* Sign In Button */}
+                  <Pressable
+                    onPress={submit}
+                    disabled={isSaving}
+                    style={styles.signInSubmitButton}
+                    accessibilityRole="button"
+                  >
+                    <LinearGradient
+                      colors={['#0F4C5C', '#1D7287']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.signInGradientButton}
+                    >
+                      {isSaving ? (
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                      ) : (
+                        <>
+                          <Icon name="login-variant" size={20} color="#FFFFFF" />
+                          <Text style={styles.signInGradientButtonText}>Sign In to Account</Text>
+                        </>
+                      )}
+                    </LinearGradient>
+                  </Pressable>
 
-              {/* Instant Demo Explorer Button */}
-              <Pressable
-                onPress={handleDemoLogin}
-                disabled={isSaving}
-                style={[styles.demoLoginButton, { borderColor: border }]}
-                accessibilityRole="button"
-              >
-                <Icon name="flash-outline" size={18} color="#D99A1E" />
-                <Text style={[styles.demoLoginButtonText, { color: text }]}>
-                  One-Click Demo Traveler Login
-                </Text>
-              </Pressable>
+                  {/* Instant Demo Explorer Button */}
+                  <Pressable
+                    onPress={handleDemoLogin}
+                    disabled={isSaving}
+                    style={[styles.demoLoginButton, { borderColor: border }]}
+                    accessibilityRole="button"
+                  >
+                    <Icon name="flash-outline" size={18} color="#D99A1E" />
+                    <Text style={[styles.demoLoginButtonText, { color: text }]}>
+                      One-Click Demo Traveler Login
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {/* Security Footer Note */}
+                <View style={styles.signInFooterNote}>
+                  <Icon name="shield-check-outline" size={15} color={colors.primary} />
+                  <Text style={[styles.signInFooterText, { color: mutedText }]}>
+                    Secure local account • Offline capable
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
         )}
@@ -2034,77 +2102,148 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
   },
 
-  /* ------------------- SIGN IN VIEW ------------------- */
+  /* ------------------- SIGN IN VIEW (FULL SCREEN TOP NOTCH & DOWN TO FULL MOBILE) ------------------- */
   signInCardWrap: {
-    padding: 16,
+    flex: 1,
+    width: '100%',
+    minHeight: '100%',
     alignItems: 'center',
+    padding: 0,
   },
   signInHeroHeader: {
     width: '100%',
-    maxWidth: 440,
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingBottom: 32,
     paddingHorizontal: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
+    position: 'relative',
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#072832',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 14,
+      },
+      android: { elevation: 8 },
+      default: {},
+    }),
+  },
+  signInHeroInner: {
+    width: '100%',
+    maxWidth: 480,
+    alignItems: 'center',
   },
   signInEmblemRing: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 2,
-    borderColor: 'rgba(245, 185, 66, 0.7)',
+    borderColor: 'rgba(245, 185, 66, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
+    ...Platform.select({
+      ios: { shadowColor: '#F5B942', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8 },
+      android: { elevation: 6 },
+      default: {},
+    }),
   },
   signInHeroTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#FFFFFF',
     fontFamily: fonts.sans,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   signInHeroSubtitle: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.82)',
-    marginTop: 4,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 6,
     textAlign: 'center',
+    fontFamily: fonts.sans,
+    maxWidth: 320,
+    lineHeight: 18,
+  },
+  provincePillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 18,
+  },
+  provincePill: {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 185, 66, 0.35)',
+  },
+  provincePillText: {
+    color: '#F5B942',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
     fontFamily: fonts.sans,
   },
   signInFormCard: {
     width: '100%',
-    maxWidth: 440,
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    padding: 20,
-    gap: 14,
+    flex: 1,
+    alignItems: 'center',
+    borderWidth: 0,
+    borderRadius: 0,
+  },
+  signInFormInner: {
+    width: '100%',
+    maxWidth: 480,
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 24,
+    gap: 18,
+  },
+  signInHeaderWrap: {
+    marginBottom: 4,
   },
   signInSectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     fontFamily: fonts.sans,
+    letterSpacing: -0.3,
   },
   signInSectionSub: {
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     fontFamily: fonts.sans,
-    marginTop: -6,
-    marginBottom: 4,
+    marginTop: 4,
+  },
+  signInInputsGroup: {
+    gap: 14,
+  },
+  signInActionsGroup: {
+    gap: 12,
+    marginTop: 6,
   },
   signInSubmitButton: {
     borderRadius: 14,
     overflow: 'hidden',
-    marginTop: 6,
+    ...Platform.select({
+      ios: { shadowColor: '#0F4C5C', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 8 },
+      android: { elevation: 4 },
+      default: {},
+    }),
   },
   signInGradientButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    minHeight: 48,
+    minHeight: 50,
   },
   signInGradientButtonText: {
     color: '#FFFFFF',
@@ -2119,12 +2258,23 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderRadius: 14,
-    minHeight: 46,
+    minHeight: 48,
     paddingHorizontal: 12,
   },
   demoLoginButtonText: {
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: fonts.sans,
+  },
+  signInFooterNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  signInFooterText: {
+    fontSize: 12,
     fontFamily: fonts.sans,
   },
 
