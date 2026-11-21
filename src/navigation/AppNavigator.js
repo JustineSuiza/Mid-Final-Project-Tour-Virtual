@@ -17,6 +17,7 @@ import ProgressScreen from '../screens/ProgressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import AccountScreen from '../screens/AccountScreen';
 import DestinationDetailScreen from '../screens/DestinationDetailScreen';
+import RecentlyViewedScreen from '../screens/RecentlyViewedScreen';
 import DestinationFormScreen from '../screens/DestinationFormScreen';
 import VirtualTourScreen from '../screens/VirtualTourScreen';
 import Tour360Screen from '../screens/Tour360Screen';
@@ -361,6 +362,7 @@ export default function AppNavigator() {
       >
         <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
         <Stack.Screen name="DestinationDetail" component={DestinationDetailScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="RecentlyViewed" component={RecentlyViewedScreen} options={{ headerShown: false }} />
         <Stack.Screen name="DestinationForm" component={DestinationFormScreen} />
         <Stack.Screen name="VirtualTour" component={VirtualTourScreen} options={{ title: 'Virtual tour' }} />
         <Stack.Screen name="Tour360" component={Tour360Screen} options={{ title: '360° tour' }} />

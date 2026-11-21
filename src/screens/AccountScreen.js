@@ -114,6 +114,7 @@ export default function AccountScreen() {
   const [mode, setMode] = useState('signIn');
   const [profileView, setProfileView] = useState('preview'); // 'preview' | 'edit'
   const [notice, setNotice] = useState('');
+  const [resetEmailNotice, setResetEmailNotice] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
 
@@ -376,6 +377,14 @@ export default function AccountScreen() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSendResetEmail = () => {
+    setResetEmailNotice(
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+        ? 'Email sending is not configured for this app.'
+        : 'Please enter a valid email address.'
+    );
   };
 
   const handleLogout = () => {
@@ -1098,7 +1107,10 @@ export default function AccountScreen() {
                     <SimpleInputField
                       label="Email Address"
                       value={email}
-                      onChangeText={setEmail}
+                      onChangeText={(value) => {
+                        setEmail(value);
+                        setResetEmailNotice('');
+                      }}
                       placeholder="you@calabarzon.ph"
                       icon="email-outline"
                       keyboardType="email-address"
@@ -1110,24 +1122,43 @@ export default function AccountScreen() {
                       inputBg={inputBg}
                       accent={accent}
                     />
-                    <Pressable
-                      onPress={() => {
-                        setMode('signIn');
-                        setNotice('');
-                      }}
-                      style={styles.signInSubmitButton}
-                      accessibilityRole="button"
-                    >
-                      <LinearGradient
-                        colors={['#0F4C5C', '#1D7287']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.signInGradientButton}
+                    <View style={styles.forgotPasswordActions}>
+                      <Pressable
+                        onPress={handleSendResetEmail}
+                        style={styles.signInSubmitButton}
+                        accessibilityRole="button"
                       >
-                        <Icon name="arrow-left" size={20} color="#FFFFFF" />
-                        <Text style={styles.signInGradientButtonText}>Back to Sign In</Text>
-                      </LinearGradient>
-                    </Pressable>
+                        <LinearGradient
+                          colors={['#0F4C5C', '#1D7287']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={styles.signInGradientButton}
+                        >
+                          <Icon name="email-outline" size={20} color="#FFFFFF" />
+                          <Text style={styles.signInGradientButtonText}>Send Email</Text>
+                        </LinearGradient>
+                      </Pressable>
+                      {resetEmailNotice ? (
+                        <Text
+                          style={[styles.resetEmailNotice, { color: colors.danger }]}
+                          accessibilityRole="alert"
+                        >
+                          {resetEmailNotice}
+                        </Text>
+                      ) : null}
+                      <Pressable
+                        onPress={() => {
+                          setMode('signIn');
+                          setNotice('');
+                          setResetEmailNotice('');
+                        }}
+                        style={styles.forgotBackButton}
+                        accessibilityRole="button"
+                      >
+                        <Icon name="arrow-left" size={16} color={mutedText} />
+                        <Text style={[styles.forgotBackButtonText, { color: mutedText }]}>Back to Sign In</Text>
+                      </Pressable>
+                    </View>
                   </>
                 ) : mode === 'signUp' ? (
                   <>
@@ -2513,6 +2544,29 @@ const styles = StyleSheet.create({
   },
   signInActionsGroup: {
     marginTop: 6,
+  },
+  forgotPasswordActions: {
+    marginTop: 6,
+    gap: 8,
+  },
+  resetEmailNotice: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    fontFamily: fonts.sans,
+  },
+  forgotBackButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingRight: 12,
+  },
+  forgotBackButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontFamily: fonts.sans,
   },
   switchAccountMode: {
     alignSelf: 'center',

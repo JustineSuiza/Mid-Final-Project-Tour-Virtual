@@ -11,6 +11,7 @@ import {
   deleteDestination, getDestination, getProgress, getQuestionCount, setCompleted,
 } from '../db/database';
 import { categoryMeta, colors, fonts } from '../theme';
+import { recordRecentlyViewed } from '../utils/recentlyViewed';
 
 export default function DestinationDetailScreen({ route, navigation }) {
   const { background, surface, text, mutedText, border } = useAppTheme();
@@ -39,6 +40,11 @@ export default function DestinationDetailScreen({ route, navigation }) {
   const load = useCallback(async () => {
     const d = await getDestination(id);
     if (!d) return;
+    try {
+      await recordRecentlyViewed(id);
+    } catch (error) {
+      console.warn('Could not save this destination to recently viewed:', error);
+    }
     setDest(d);
     setProgress(await getProgress(id));
     setQCount(await getQuestionCount(id));

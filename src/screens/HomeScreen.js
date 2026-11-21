@@ -5,11 +5,13 @@ import { useFonts } from 'expo-font';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import DestinationImage from '../components/DestinationImage';
 import { useAccount } from '../AccountContext';
 import { getHomeData } from '../db/database';
 import { useAppTheme } from '../ThemeContext';
 import { categories, categoryMeta, colors, fonts } from '../theme';
 import { getDestinationImageSource } from '../utils/destinationImages';
+import { getRecentlyViewedDestinations } from '../utils/recentlyViewed';
 
 const FAQ_ITEMS = [
   {
@@ -38,6 +40,7 @@ export default function HomeScreen({ navigation }) {
     GalaDisplay: require('../../font/CfMidnightRegular-MJ8B.ttf'),
   });
   const [home, setHome] = useState({ categoryImages: {}, upNext: [] });
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [openFaq, setOpenFaq] = useState(null);
   const [temperature, setTemperature] = useState(null);
   const [weatherUnavailable, setWeatherUnavailable] = useState(false);
@@ -75,7 +78,12 @@ export default function HomeScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      getHomeData().then(setHome);
+      getHomeData()
+        .then(setHome)
+        .catch((error) => console.warn('Could not load Explore data:', error));
+      getRecentlyViewedDestinations()
+        .then(setRecentlyViewed)
+        .catch((error) => console.warn('Could not load recently viewed destinations:', error));
     }, [])
   );
 
@@ -137,11 +145,50 @@ export default function HomeScreen({ navigation }) {
 
           <View style={styles.intro}>
             <Text style={[styles.title, { color: text, fontFamily: fontsLoaded ? 'GalaDisplay' : fonts.sans }]}>
-              Gala <Text style={[styles.titleAccent, { color: colors.gold }]}>Tour</Text>
+              Gala <Text style={[styles.titleAccent, { color: colors.gold }]}>Tour App</Text>
             </Text>
             <Text style={[styles.sub, { color: '#000000' }]}>
               Visit heritage sites and natural wonders in Cavite, Laguna, Batangas, Rizal, and Quezon from wherever you are.
             </Text>
+          </View>
+          <View style={styles.recentSection}>
+            <View style={styles.recentHeadingRow}>
+              <Text style={[styles.recentHeading, { color: text }]}>Recently viewed</Text>
+              <Pressable
+                onPress={() => navigation.getParent()?.navigate('RecentlyViewed')}
+                accessibilityRole="button"
+                accessibilityLabel="See all recently viewed destinations"
+                hitSlop={8}
+              >
+                <Text style={[styles.seeMore, { color: colors.primary }]}>See more</Text>
+              </Pressable>
+            </View>
+            {recentlyViewed.length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recentList}>
+                {recentlyViewed.slice(0, 5).map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={styles.recentCard}
+                    onPress={() => navigation.navigate('DestinationDetail', { id: item.id })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${item.name}`}
+                  >
+                    <DestinationImage
+                      uri={item.imageUri}
+                      category={item.category}
+                      style={styles.recentImage}
+                    />
+                    <Text style={[styles.recentName, { color: text }]} numberOfLines={2}>
+                      {item.name}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={[styles.recentEmpty, { color: mutedText }]}>
+                Destinations you open will appear here.
+              </Text>
+            )}
           </View>
           <Text style={[styles.categoryHeading, { color: text }]}>Where to?</Text>
           <Text style={[styles.categorySubheading, { color: mutedText }]}>
@@ -247,6 +294,20 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: 8,
   },
+  recentSection: { marginTop: 22 },
+  recentHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  recentHeading: { fontFamily: fonts.sans, fontSize: 20, fontWeight: '700' },
+  seeMore: { fontSize: 15, fontWeight: '600', textDecorationLine: 'underline' },
+  recentList: { gap: 12, paddingRight: 4 },
+  recentCard: { width: 148 },
+  recentImage: { width: '100%', height: 92, borderRadius: 12 },
+  recentName: { fontSize: 14, fontWeight: '600', lineHeight: 19, marginTop: 7 },
+  recentEmpty: { fontSize: 14, lineHeight: 20, paddingVertical: 8 },
   title: {
     fontFamily: fonts.sans,
     fontSize: 34,

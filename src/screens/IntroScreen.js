@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useVideoPlayer, VideoView } from 'expo-video';
 
-const introVideo = require('../../Wake Up in CALABARZON _ Philippines Tourism Ad.mp4');
+const introVideo = require('../../intro.mp4');
 const FOOTER_HEIGHT = 112;
 
 export default function IntroScreen({ onExplore }) {
@@ -12,10 +12,26 @@ export default function IntroScreen({ onExplore }) {
   const player = useVideoPlayer(introVideo, (videoPlayer) => {
     videoPlayer.loop = true;
     videoPlayer.muted = true;
+    videoPlayer.play();
   });
 
   useEffect(() => {
-    player.play();
+    const subscription = player.addListener('statusChange', ({ status }) => {
+      if (status === 'readyToPlay') {
+        player.play();
+      }
+    });
+    const tryPlay = () => {
+      try {
+        player.play();
+      } catch {}
+    };
+    tryPlay();
+    const timer = setTimeout(tryPlay, 300);
+    return () => {
+      subscription.remove();
+      clearTimeout(timer);
+    };
   }, [player]);
 
   return (
