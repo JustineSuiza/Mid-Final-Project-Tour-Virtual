@@ -46,10 +46,6 @@ Use **Settings → Appearance** to toggle light and dark themes. Your choice is 
 - Every finished quiz is saved as an attempt. The best score per destination is kept.
 - A destination becomes **Completed** when a quiz score reaches 70% (`PASS_MARK` in `src/theme.js`). It can also be marked manually on the detail screen.
 
-## Using the National Museum of Fine Arts reference
-
-https://nmfa.nationalmuseum.gov.ph/ is a 360° virtual tour. The app supports this pattern: edit any destination, paste a link into **360° tour link**, and the Virtual Tour screen shows an **Open 360° tour** button that loads the page in an in-app WebView. Use it for any 360° tour of a CALABARZON site you find. (The museum itself is in Manila, outside Region IV-A, so it is not included as a seed record.)
-
 ## Notes
 
 - Seed destinations have no photos so that every image is one you have permission to use. Use **Edit destination** to add a cover image and tour photos.

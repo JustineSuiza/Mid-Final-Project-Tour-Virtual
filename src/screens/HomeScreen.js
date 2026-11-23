@@ -306,7 +306,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fonts.sans,
     fontSize: 34,
-    fontWeight: '900',
     letterSpacing: -1,
     lineHeight: 40,
     textTransform: 'uppercase',
@@ -346,7 +345,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   flag: { position: 'absolute', right: 14, width: 84, height: 56, borderRadius: 6 },
-  titleAccent: { fontWeight: '800', letterSpacing: 0.4 },
+  titleAccent: { letterSpacing: 0.4 },
   sub: { fontFamily: fonts.sans, fontSize: 16, fontWeight: '400', lineHeight: 23, marginTop: 8, textAlign: 'center' },
   categoryHeading: {
     fontFamily: fonts.sans,

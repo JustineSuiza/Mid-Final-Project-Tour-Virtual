@@ -1,54 +1,15 @@
-import React, { useEffect } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import Video from 'react-native-video';
 
-const introVideo = require('../../intro.mp4');
 const FOOTER_HEIGHT = 112;
-
-function NativeIntroVideo() {
-  return (
-    <Video
-      source={introVideo}
-      style={StyleSheet.absoluteFill}
-      resizeMode="cover"
-      repeat
-      muted
-      controls={false}
-    />
-  );
-}
-
-function WebIntroVideo() {
-  useEffect(() => {
-    const el = document.getElementById('gala-intro-video');
-    if (el) {
-      el.muted = true;
-      el.play().catch(() => {});
-    }
-  }, []);
-  return React.createElement('video', {
-    id: 'gala-intro-video',
-    src: typeof introVideo === 'string' ? introVideo : introVideo?.uri || introVideo?.default || introVideo,
-    autoPlay: true,
-    loop: true,
-    muted: true,
-    playsInline: true,
-    style: {
-      position: 'absolute',
-      top: 0, left: 0, width: '100%', height: '100%',
-      objectFit: 'cover',
-    },
-  });
-}
 
 export default function IntroScreen({ onExplore }) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.screen}>
-      {Platform.OS === 'web' ? <WebIntroVideo /> : <NativeIntroVideo />}
       <LinearGradient
         pointerEvents="none"
         colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.04)', 'rgba(0,0,0,0.45)']}
