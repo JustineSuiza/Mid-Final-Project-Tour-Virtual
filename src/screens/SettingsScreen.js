@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useAppTheme } from '../ThemeContext';
 import { colors, fonts } from '../theme';
 

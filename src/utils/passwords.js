@@ -4,7 +4,6 @@ import { bytesToHex, hexToBytes, randomBytes, utf8ToBytes } from '@noble/hashes/
 
 const PBKDF2_SCHEME = 'pbkdf2-sha256';
 const FAST_SCHEME = 'sha256-salt-v1';
-const ITERATIONS = 310000;
 const SALT_LENGTH = 16;
 const HASH_LENGTH = 32;
 

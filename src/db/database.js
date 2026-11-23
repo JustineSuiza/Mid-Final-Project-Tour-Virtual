@@ -1,5 +1,5 @@
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where, writeBatch,
+  collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { firestore } from '../firebase';
 import { LEGACY_QUIZ_QUESTIONS, SEED_DESTINATIONS } from './seed';
@@ -336,27 +336,6 @@ export async function recordQuizAttempt(destinationId, score, total) {
   return { pct, passed, best };
 }
 
-export async function getProgressSummary() {
-  const [dests, progress, attempts] = await Promise.all([getAllDestinations(), getAllProgress(), getAllAttempts()]);
-  const pmap = new Map(progress.map((p) => [p.destinationId, p]));
-  const destinations = dests.map((d) => {
-    const p = pmap.get(d.id);
-    return {
-      id: d.id, name: d.name, category: d.category,
-      completed: p?.completed ? 1 : 0, bestScore: p?.bestScore ?? null,
-      totalQuestions: p?.totalQuestions ?? null, attempts: p?.attempts || 0,
-    };
-  }).sort((a, b) => b.completed - a.completed || a.name.localeCompare(b.name));
-
-  const recent = [...attempts].sort((a, b) => Number(b.id) - Number(a.id)).slice(0, 8).map((a) => ({
-    id: a.id, score: a.score, total: a.total, takenAt: a.takenAt,
-    name: dests.find((d) => d.id === a.destinationId)?.name || 'Deleted destination',
-  }));
-  const scored = destinations.filter((d) => d.totalQuestions);
-  const avgBest = scored.length ? scored.reduce((sum, d) => sum + d.bestScore / d.totalQuestions, 0) / scored.length : null;
-  return { total: destinations.length, completed: destinations.filter((d) => d.completed === 1).length, avgBest, destinations, recent };
-}
-
 export async function getProgressDashboard() {
   const [dests, attempts] = await Promise.all([getAllDestinations(), getAllAttempts()]);
   const destinations = dests.map((d) => ({ id: d.id, name: d.name, category: d.category })).sort((a, b) => Number(a.id) - Number(b.id));
@@ -366,12 +345,4 @@ export async function getProgressDashboard() {
     .sort((a, b) => Number(a.id) - Number(b.id))
     .map((a) => ({ destinationId: a.destinationId, score: a.score, total: a.total, category: categories.get(a.destinationId) }));
   return buildDashboard(destinations, attemptRows);
-}
-
-export async function resetProgress() {
-  const [attempts, progress] = await Promise.all([getAllAttempts(), getAllProgress()]);
-  const batch = writeBatch(firestore);
-  attempts.forEach((a) => batch.delete(attemptDoc(a.id)));
-  progress.forEach((p) => batch.delete(progressDoc(p.destinationId)));
-  await batch.commit();
 }

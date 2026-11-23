@@ -19,7 +19,6 @@ function yAt(value) {
 
 export default function ScoreTrend({ recent, palette }) {
   const n = recent.length - 1;
-  const last = recent[n].pct;
   let line = `M${xAt(0, recent.length)},${yAt(recent[0].pct)}`;
   for (let i = 1; i < recent.length; i += 1) {
     const mid = (xAt(i - 1, recent.length) + xAt(i, recent.length)) / 2;
